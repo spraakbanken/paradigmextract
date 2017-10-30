@@ -285,10 +285,10 @@ def findfactors(word, lcs):
 
 def vars_to_string(baseform, varlist):
     vstr = [(unicode(idx+1), v) for idx, v in enumerate(varlist)]
-    return vstr
+    return [("0", baseform)]+vstr
 
 def split_tags(tags):
-    spl = [tg.split(u',') for tg in tags]
+    spl = [tg.split(u',,') for tg in tags]
 
     newforms = []
     ctr = 1
@@ -313,20 +313,20 @@ def collapse_tables(tables):
     paradigms = []
     tablestrings = []
     collapsedidx = set() # Store indices to collapsed tables
-    for idx, t in enumerate(tables):
-        tags = t[1]
-        t = t[0]
+    for idx, tab in enumerate(tables):
+        tags = tab[3]
+        t = tab[2]
         if idx in collapsedidx:
             continue
         varstring = []
         vartable = t[2]
         # Find similar tables
-        for idx2, t2 in enumerate(tables):
-            t2 = t2[0]
+        for idx2, tab2 in enumerate(tables):
+            t2 = tab2[2]
             if idx2 != idx and vartable == t2[2]:
-                varstring.append(vars_to_string(t2[0][0], t2[3]))
+                varstring.append(vars_to_string(tab2[0], t2[3]))
                 collapsedidx.update({idx2})
-        varstring.append(vars_to_string(t[0][0], t[3]))
+        varstring.append(vars_to_string(tab[0], t[3]))
         splittags = split_tags(tags)
         formlist = zip(t[2], splittags)
         p = paradigm.Paradigm(formlist, varstring)
@@ -367,11 +367,13 @@ def learnparadigms(inflectiontables):
     vartables = []
     TABLELIMIT = 16
     for table, tagtable in inflectiontables:
+        tablehead, table = table[0], table[1:]
+        taghead, tagtable = tagtable[0], tagtable[1:]
         wg = [wordgraph.wordtograph(x) for x in table]
         result = reduce(lambda x, y: x & y, wg)
         lcss = result.longestwords
         if not lcss: # Table has no LCS - no variables
-            vartables.append(([[table,table,table,[],0,0]], tagtable))
+            vartables.append((tablehead, taghead, [[table,table,table,[],0,0]], tagtable))
             continue
 
         combos = []
@@ -385,13 +387,13 @@ def learnparadigms(inflectiontables):
                 variabletable = [string_to_varstring(s, variablelist) for s in c]
                 combos.append([table,c,variabletable,variablelist,numvars,infixcount])
 
-        vartables.append((combos,tagtable))
+        vartables.append((tablehead, taghead, combos,tagtable))
 
     filteredtables = []
 
-    for t, tags in vartables:
+    for idform, idtag, t, tags in vartables:
         besttable = min(t, key = lambda s: (s[4],s[5]))
-        filteredtables.append((besttable,tags))
+        filteredtables.append((idform, idtag, besttable,tags))
 
     paradigmlist = collapse_tables(filteredtables)
 

@@ -26,6 +26,18 @@ morph/%.foma: paradigms/%.p
 	mkdir -p morph ; python src/morphanalyzer.py -o -c -u -s -n $(notdir $@.bin) $< > $@
 holes:
 	cd src; python hole.py
+
+SALDOM=$(wildcard saldom/words/*.txt)
+SALDOMPARAS=$(SALDOM:.txt=.p)
+saldomp: $(SALDOMPARAS)
+saldomaba:
+	python src/pextract.py < saldom/aba.txt > paradigms/saldom_aba.p
+
+saldom/words/%.p:
+	python src/pextract.py < saldom/words/$*.txt > saldom/words/$*.p
+	python src/paradigm.py -t saldom/words/$*.p
+testsaldom:
+	python src/paradigm.py -t paradigms/saldom_*.p
 htest:
 	python src/pextract.py < data/de_noun_h_train_dev.txt > paradigms/de_noun_h_train_dev.p
 	python src/paradigm.py -p paradigms/de_noun_h_train_dev.p

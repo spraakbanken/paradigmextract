@@ -85,12 +85,12 @@ def eval_multiple_entries(p, words):
     consistentvars = reduce(lambda x,y: x & y, wmatches)
     return consistentvars
 
-    
+
 def main(argv):
 
-    options, remainder = getopt.gnu_getopt(argv[1:], 'tk:n:p:dr:', ['tables','kbest','ngram','prior','debug','pprior'])
+    options, remainder = getopt.gnu_getopt(argv[1:], 'tk:n:p:dr:c', ['tables','kbest','ngram','prior','debug','pprior','choose'])
 
-    print_tables, kbest, ngramorder, ngramprior, debug, pprior = False, 1, 3, 0.01, False, 1.0
+    print_tables, kbest, ngramorder, ngramprior, debug, pprior,choose = False, 1, 3, 0.01, False, 1.0, False
     for opt, arg in options:
         if opt in ('-t', '--tables'):
             print_tables = True
@@ -106,8 +106,38 @@ def main(argv):
             debug = True
         elif opt in ('-r', '--pprior'):
             pprior = float(arg)
-               
-    paradigms = paradigm.load_file(sys.argv[1]) # [(occurrence_count, name, paradigm),...,]
+        elif opt in ('-c', '--choose'):
+            choose = True
+    inp = iter(lambda: sys.stdin.readline().decode('utf-8'), '')
+    paras, numexamples, lms = build(sys.argv[1], ngramorder, ngramprior)
+    res = test_paradigms(inp, paras, numexamples, lms, print_tables, debug, pprior, choose)
+
+    for words, analyses in res:
+        # Print all analyses + optionally a table
+        for aindex, (score, p, v) in enumerate(analyses):
+            if aindex >= kbest:
+                break
+            wordformlist = []
+            varstring = '(' + ','.join([str(feat) + '=' + val for feat,val in zip(range(1,len(v)+1), v)]) + ')'
+            table = p(*v)          # Instantiate table with vars from analysis
+            baseform = table[0][0]
+            matchtable = [(form, msd) for form, msd in table if form in words]
+            wordformlist = [form +':' + baseform + ',' + ','.join([m[0] + '=' + m[1] for m in msd]) for form, msd in matchtable]
+            print (unicode(score) + ' ' + p.name + ' ' + varstring + ' ' + '#'.join(wordformlist)).encode("utf-8")
+            if print_tables:
+                for form, msd in table:
+                    if form in words:
+                        form = "*" + form + "*"
+                    msdprint = ','.join([m[0] + '=' + m[1] for m in msd])
+                    print (form + '\t' + msdprint).encode("utf-8")
+
+            if debug:
+               print "Members:", ", ".join([p(*[var[1] for var in vs])[0][0] for vs in p.var_insts])
+        print
+
+
+def build(inpfile, ngramorder, ngramprior):
+    paradigms = paradigm.load_file(inpfile) # [(occurrence_count, name, paradigm),...,]
     alphabet = paradigms_to_alphabet(paradigms)
 
     numexamples = sum(map(lambda x: x.count, paradigms))
@@ -122,18 +152,33 @@ def main(argv):
             model = stringngram(varinsts, alphabet = alphabet, order = ngramorder, ngramprior = ngramprior)
             slotmodels.append(model)
         lms.append((numvars, slotmodels))
+    return paradigms, numexamples, lms
 
-            
-    for line in iter(lambda: sys.stdin.readline().decode('utf-8'), ''):
-        words = line.strip().split()
+
+def test_paradigms(inp, paradigms, numexamples, lms, print_tables, debug, pprior, choose):
+    res = []
+    for line in inp:
+        if choose:
+            word, lemgram = line.strip().split()
+            words = [word]
+        else:
+            words = line.strip().split()
+
         if len(words) == 0:
             continue
-        
-        # Quick filter out most paradigms
-        fittingparadigms = [(pindex, p) for pindex, p in enumerate(paradigms) if all(p.fits_paradigm(w, constrained = False) for w in words)]
+
+        if choose:
+            print 'choose', lemgram
+            fittingparadigms = [(pindex, p) for pindex, p in enumerate(paradigms) if lemgram in p.members]
+            #fittingparadigms = [(pindex, p) for pindex, p in enumerate(paradigms) if p.name==inppara]
+        else:
+            # Quick filter out most paradigms
+            fittingparadigms = [(pindex, p) for pindex, p in enumerate(paradigms) if all(p.fits_paradigm(w, constrained = False) for w in words)]
+
         fittingparadigms = filter(lambda p: eval_multiple_entries(p[1], words), fittingparadigms)
         
         if debug:
+        # Quick filter out most paradigms
             print "Plausible paradigms:"
             for pnum, p in fittingparadigms:
                 print pnum, p.name
@@ -154,27 +199,10 @@ def main(argv):
                     analyses.append((score, p, v))
 
         analyses.sort(reverse = True, key = lambda x: x[0])
+        res.append((words, analyses))
+    return res
 
-        # Print all analyses + optionally a table        
-        for aindex, (score, p, v) in enumerate(analyses):
-            if aindex >= kbest:
-                break
-            wordformlist = []
-            varstring = '(' + ','.join([str(feat) + '=' + val for feat,val in zip(range(1,len(v)+1), v)]) + ')'
-            table = p(*v)          # Instantiate table with vars from analysis
-            baseform = table[0][0]
-            matchtable = [(form, msd) for form, msd in table if form in words]
-            wordformlist = [form +':' + baseform + ',' + ','.join([m[0] + '=' + m[1] for m in msd]) for form, msd in matchtable]                    
-            print (unicode(score) + ' ' + p.name + ' ' + varstring + ' ' + '#'.join(wordformlist)).encode("utf-8")
-            if print_tables:
-                for form, msd in table:
-                    if form in words:
-                        form = "*" + form + "*"
-                    msdprint = ','.join([m[0] + '=' + m[1] for m in msd])
-                    print (form + '\t' + msdprint).encode("utf-8")
 
-        print
-                    
 
 if __name__ == "__main__":
     main(sys.argv)

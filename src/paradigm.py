@@ -34,7 +34,7 @@ class Paradigm:
       if prefix == None:
           self.prefix = ''
       else:
-          self.prefix = prefix         
+          self.prefix = prefix
       for (f,msd) in form_msds:
           self.forms.append(Form(f,msd,var_insts))
 
@@ -43,8 +43,9 @@ class Paradigm:
             return self.p_info[attr]
         else:
             if len(self.var_insts) != 0:
-                self.p_info['name'] = self.prefix + self.__call__(*[s for (_,s) in self.var_insts[0]])[0][0]
+                self.p_info['name'] = self.prefix + self.__call__(*[s for (_,s) in self.var_insts[0][1:]])[0][0]
                 self.p_info['count'] = len(self.var_insts)
+                self.p_info['members'] = [var[0][1] for var in self.var_insts]
             else: # no variables
                 self.p_info['name'] = self.prefix + self.__call__()[0][0]
                 self.p_info['count'] = 1
@@ -109,7 +110,7 @@ class Paradigm:
 
     def __str__(self):
         p = "#".join([f.__unicode__() for f in self.forms])
-        v = "#".join([",".join(['%s=%s' % v for v in vs]) for vs in self.var_insts])
+        v = "#".join([",,".join(['%s=%s' % v for v in vs]) for vs in self.var_insts])
         return ('%s\t%s' % (p,v)).encode('utf-8')
 
 class Form:
@@ -238,32 +239,38 @@ class Form:
         if len(ms) == 0:
             return "+".join(self.form)
         else:
-            return "%s:%s" % ("+".join(self.form), ",".join(ms))
+            return "%s::%s" % ("+".join(self.form), ",,".join(ms))
 
 def load_file(file):
     paradigms = []
+    line_no = 1
     with codecs.open(file,encoding='utf-8') as f:
-        for l in f:
-            try:
-                (p,ex) = l.strip().split('\t')
-            except:
-                p = l.strip()
-                ex = ''
-            p_members = []
-            wfs = []
-            for s in p.split('#'):
-                (w,m) = s.split(':')
-                msd = [tuple(x.split('=')) for x in m.split(',')]
-                wfs.append((w,msd))
-            if len(ex) > 0:
-                for s in ex.split('#'):
-                    mem = []
-                    for vbind in s.split(','):
-                        mem.append(tuple(vbind.split('=')))
-                    p_members.append(mem)
-            else: # no variables
-                p_members = []
-            paradigms.append((len(p_members),wfs,p_members))
+        try:
+           for l in f:
+               try:
+                   (p,ex) = l.strip().split('\t')
+               except:
+                   p = l.strip()
+                   ex = ''
+               p_members = []
+               wfs = []
+               for s in p.split('#'):
+                   (w,m) = s.split('::')
+                   msd = [tuple(x.split('=')) for x in m.split(',,')]
+                   wfs.append((w,msd))
+               if len(ex) > 0:
+                   for s in ex.split('#'):
+                       mem = []
+                       for vbind in s.split(',,'):
+                           mem.append(tuple(vbind.split('=')))
+                       p_members.append(mem)
+               else: # no variables
+                   p_members = []
+               paradigms.append((len(p_members),wfs,p_members))
+               line_no += 1
+        except:
+            print 'Error on line', line_no
+            raise
     paradigms.sort(reverse=True)
     return [Paradigm(wfs,p_members, 'p%d_' % i) for (i,(_,wfs,p_members)) in enumerate(paradigms,1)]
 
@@ -275,12 +282,13 @@ if __name__ == '__main__':
     if '-p' in sys.argv:
         for p in load_file(sys.argv[-1]):
             print ('name: %s, count: %d' % (p.name,p.count)).encode('utf-8')
-            if len(p.var_insts) > 0:
-                print ('members: %s' % (", ".join([p(*[v[1] for v in vs])[0][0] for vs in p.var_insts]))).encode('utf-8')
-            else:
-                print ('members: %s' % (p()[0][0])).encode('utf-8')
+            #if len(p.var_insts) > 0:
+            print ('members: %s' % (", ".join(p.members))).encode('utf-8')
+                #print ('members: %s' % (", ".join([p(*[v[1] for v in vs])[0][0] for vs in p.var_insts]))).encode('utf-8')
+            #else:
+                #print ('members: %s' % (p()[0][0])).encode('utf-8')
             for f in p.forms:
-                print unicode(f).replace(':','\t').encode('utf-8')
+                print unicode(f).replace('::','\t').encode('utf-8')
             print
     elif '-s' in sys.argv:
         for p in load_file(sys.argv[-1]):
@@ -289,5 +297,8 @@ if __name__ == '__main__':
             for (i,(is_var, s)) in enumerate(p.slots):
                 print ('%s: %s' % (pr(i, is_var)," ".join(s))).encode('utf-8')
             print
+    elif '-t' in sys.argv:
+        load_file(sys.argv[-1])
+
     else:
             print 'Usage: <program> [-p|-s] <paradigm_file>'
