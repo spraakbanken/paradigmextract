@@ -3,6 +3,7 @@ import codecs
 from collections import Counter
 import generate
 import paradigm as P
+import pextract
 import re
 import readline
 import sys
@@ -33,7 +34,33 @@ import sys
 
       # Inspect table
       > Tabell ko
+
+      # Nytt ko, kossor, kossora
+      > Tabell ko
 """
+
+
+def make_paradigm(words):
+    " Create a new paradigm "
+    lines = words.split(',')
+    lines = [lines[0]+'.1']+lines
+    thistable = []
+    thesetags = []
+    for l in lines:
+       if u'\t' in l:
+           form, tag = l.split(u'\t')
+       else:
+           form = l
+           tag = u'tag'
+       thistable.append(form.strip())
+       thesetags.append(tag)
+    learnedparadigms = pextract.learnparadigms([(thistable, thesetags)])
+    for p in learnedparadigms:
+        print '%s.\t' % lines[0],
+        print ','.join(['%s="%s"' % inst for inst in  p.var_insts[0][1:]])
+        for f in p.forms:
+            print unicode(f).split('::')[0].encode('utf-8')
+        print
 
 
 def count(paradigmfile):
@@ -121,7 +148,7 @@ def make_wordlemgrams(word, lemgram):
     word = word.split('.')[0]
     res = []
     if '.' not in lemgram:
-        lemgrams = ['%s.%s' % (lemgram, x) for x in range(5)]
+        lemgrams = ['%s.%s' % (lemgram, x) for x in range(10)]
     else:
         lemgrams = [lemgram]
     likes = []
@@ -176,8 +203,11 @@ def print_inflection(ans):
                     print (form + '\t' + msdprint).encode("utf-8")
                 print
                 printed = True
-            except:
+            except Exception as e:
                 # fails if the inflection does not work (instantiation fails)
+                print e
+                raise
+                print 'fail'
                 pass
     return printed
 
@@ -212,6 +242,14 @@ def loop():
         show = re.search('Show\s(.*\S)', inp)
         if show is not None:
             show_word(show.group(1), parafile)
+            continue
+
+        # Create a table for a new list of words (comma separated)
+        table = re.search(u'Nytt (.*)', inp)
+        if table is not None:
+            words = table.group(1)
+            make_paradigm(words)
+            print
             continue
 
         # Does x inflect as y?
@@ -276,6 +314,7 @@ def loop():
                     print
             print
             continue
+
         # Show stats for word
         show_word(inp, parafile)
         continue
