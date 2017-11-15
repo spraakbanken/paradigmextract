@@ -1,7 +1,20 @@
-### Taggar
-- Hanteringa av taggar: de slås i nuläget ihop på ett sätt som tappar kunskap
+### Taggar (bugg?)
+- Hanteringa av taggar: de slås i nuläget ihop på ett sätt som tappar kunskap.
 
-  **FIXA** exempel
+Exempelinput:
+```
+  lyster	msd=V0IPA
+  lyster	msd=V0IPX
+
+  månde	msd=V0S**
+  månde	msd=V0S*X
+  ```
+Output:
+
+```1:msd=V0IPA#1:msd=V0IPX	1=månde#1=lyster```
+
+Tabellerna har slagits ihop, trots olika taggar. Taggarna hos det andra ordet är borta.
+
 
 
 
