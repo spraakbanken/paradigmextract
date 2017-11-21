@@ -311,7 +311,6 @@ def collapse_tables(tables):
     """Input: list of tables
        Output: Collapsed paradigms."""
     paradigms = []
-    tablestrings = []
     collapsedidx = set() # Store indices to collapsed tables
     for idx, tab in enumerate(tables):
         tags = tab[3]
@@ -323,7 +322,7 @@ def collapse_tables(tables):
         # Find similar tables
         for idx2, tab2 in enumerate(tables):
             t2 = tab2[2]
-            if idx2 != idx and vartable == t2[2]:
+            if idx2 != idx and vartable == t2[2] and tags==tab2[3]:
                 varstring.append(vars_to_string(tab2[0], t2[3]))
                 collapsedidx.update({idx2})
         varstring.append(vars_to_string(tab[0], t[3]))
