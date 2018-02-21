@@ -2,11 +2,13 @@
 import codecs
 from collections import Counter
 import generate
+import numpy as st
 import paradigm as P
 import pextract
 import re
 import readline
 import sys
+saldom = True
 """ Show statistics and facts about a number of paradigms
     (Adapted for saol identifiers ("ord.1_0")
     Usage:
@@ -35,8 +37,8 @@ import sys
       # Inspect table
       > Tabell ko
 
-      # Nytt ko, kossor, kossora
-      > Tabell ko
+      # Böj ko, kossor, kossora
+      > Nytt ko, kossor, kossora
 """
 
 
@@ -63,13 +65,61 @@ def make_paradigm(words):
         print
 
 
+# TODO document
+# hur många former har varje ingång i snitt?
+def formsperparadigm(inpfile):
+    wforms = []
+    for line in inpfile:
+        infl, words = line.split('\t')
+        forms = infl.split('#')
+        neighbours = words.split('#')
+        for n in range(len(neighbours)):
+            wforms.append(len(forms))
+        if len(forms)>35:
+            print 'long', words.split('#')[0]
+
+    print 'median', st.median(wforms)
+    print 'mean', st.mean(wforms)
+    print 'min', min(wforms)
+    print 'max', max(wforms)
+
+
+# TODO document
+def accum(paradigmfile):
+    " Count the number of words for each paradigm "
+    c = Counter()
+    tot_words = 0
+    counted_w = 0
+    counted_p = 0
+    for line in paradigmfile:
+        infl, words = line.split('\t')
+        words = len(words.split('#'))
+        c[words] += 1
+        tot_words += words
+    print 'Totalt %s ord' % tot_words
+    for words, para in sorted(list(c.items()),reverse=True):
+        counted_p += para
+        counted_w += words*para
+        print counted_p, counted_w/float(tot_words), counted_w
+    return c
+
+
+# TODO document
+def entries(paradigms):
+    no_entries = 0
+    for p in paradigms:
+        no_entries += len(p.members)
+    return no_entries
+
+
 def count(paradigmfile):
     " Count the number of words for each paradigm "
     c = Counter()
     for line in paradigmfile:
         infl, words = line.split('\t')
         words = words.split('#')
-        group = span(words)
+        # group = span(words)
+        group = len(words)
         c[group] += 1
     return c
 
@@ -108,9 +158,22 @@ def make_innerwordregexp(word):
     return rex
 
 
+def make_innerwordregexp_saldom(word):
+    " Make a regexp for saol identifiers "
+    word = word.strip()
+    if '.' in word:
+        rex = word.replace('.', '\.')
+    else:
+        rex = word+'\.\..*'
+    return rex
+
+
 def make_wordregexp(word):
     " Make a regexp for saol identifiers, surroneded by separators "
-    rex = make_innerwordregexp(word)
+    if saldom:
+        rex = make_innerwordregexp_saldom(word)
+    else:
+        rex = make_innerwordregexp(word)
     return '0=('+rex+'),,'
 
 
@@ -148,12 +211,15 @@ def make_wordlemgrams(word, lemgram):
     word = word.split('.')[0]
     res = []
     if '.' not in lemgram:
-        lemgrams = ['%s.%s' % (lemgram, x) for x in range(10)]
+        if saldom:
+            lemgrams = ['%s..nn.%s' % (lemgram, x) for x in range(10)]
+        else:
+            lemgrams = ['%s.%s' % (lemgram, x) for x in range(10)]
     else:
         lemgrams = [lemgram]
     likes = []
     for lemgram in lemgrams:
-        if '_' not in lemgram:
+        if '_' not in lemgram and not saldom:
             likes.extend([lemgram+'_'+x for x in ['', '?', '0', '1', 'M']])
         else:
             likes.append(lemgram)
@@ -180,7 +246,7 @@ def inflect_like(word1, word2, paradigms):
     res = make_wordlemgrams(word1, word2)
     have_printed = False
     for (word, like) in res:
-        ans = generate.test_paradigms(['%s %s' % (word, like)], paradigms, False)
+        ans = generate.test_paradigms(['%s\t%s' % (word, like)], paradigms, False)
         printed = print_inflection(ans)
         have_printed = have_printed or printed
     if not have_printed:
@@ -230,11 +296,19 @@ def loop():
         # Show paradigm statistics
         if inp.strip() == 'Stats':
             print '%s paradigm\n' % len(parafile)
+            print u'%s ingångar\n' % entries(paradigms)
             print 'Ord per paradigm'
             for words, num in sorted(list(count(parafile).items())):
                 if words >= 10:
                     words = '%s+' % words
                 print words, '\t', num
+            print
+            continue
+
+        # Show paradigm statistics 2
+        if inp.strip() == 'Stats2':
+            print '%s paradigm\n' % len(parafile)
+            accum(parafile)
             print
             continue
 
@@ -313,6 +387,11 @@ def loop():
                         print unicode(f).replace('::', '\t').encode('utf-8')
                     print
             print
+            continue
+
+        forms = re.search(u'Forms', inp)
+        if forms is not None:
+            formsperparadigm(parafile)
             continue
 
         # Show stats for word

@@ -24,6 +24,7 @@
 # coge	person=3rd,number=singular,tense=present,mood=indicative
 # ...
 
+import functools
 import sys, math, paradigm, codecs, getopt
 
 class stringngram:
@@ -53,7 +54,7 @@ class stringngram:
         numerator = self.ngramcounts.get(ngram, 0) + self.ngramprior
         denominator = self.ngramcounts.get(ngram[:-1], 0) + len(self.alphabet) * self.ngramprior
         return math.log(numerator/float(denominator))
-                                
+
     def _letter_ngrams(self, word, n):
         return [''.join(x) for x in zip(*[word[i:] for i in range(n)])]
 
@@ -67,22 +68,28 @@ def paradigms_to_alphabet(paradigms):
                     alphabet |= set(word)
     return alphabet - {'_'}
 
+
 def eval_vars(matches, lm):
     return sum(lm[1][midx].evaluate(m) for midx, m in enumerate(matches))
 
-def eval_multiple_entries(p, words):
+
+def eval_multiple_entries(p, words, tags=[]):
     """Returns a set of consistent variable assigment to all words."""
     wmatches = []
-    for w in words:
+    print('eval',words,tags)
+    for ix, w in enumerate(words):
+        tag = tags[ix] if len(tags) > ix else ''
         wmatch = set()
-        for m in filter(lambda x: x != None, p.match(w, constrained = False)):
+        print('test', w, tag)
+        msd = [tuple(x.split('=')) for x in tag.split(',,') if tag]
+        for m in filter(lambda x: x != None, p.match(w, constrained = False, tag=msd)):
             if m == []:
                 m = [(0,())] # Add dummy to show match is exact without vars
             for submatch in m:
                 if len(submatch) > 0:
                     wmatch.add(submatch[1])
         wmatches.append(wmatch)
-    consistentvars = reduce(lambda x,y: x & y, wmatches)
+    consistentvars = functools.reduce(lambda x,y: x & y, wmatches)
     return consistentvars
 
 
@@ -123,16 +130,16 @@ def main(argv):
             baseform = table[0][0]
             matchtable = [(form, msd) for form, msd in table if form in words]
             wordformlist = [form +':' + baseform + ',' + ','.join([m[0] + '=' + m[1] for m in msd]) for form, msd in matchtable]
-            print (unicode(score) + ' ' + p.name + ' ' + varstring + ' ' + '#'.join(wordformlist)).encode("utf-8")
+            print((unicode(score) + ' ' + p.name + ' ' + varstring + ' ' + '#'.join(wordformlist)).encode("utf-8"))
             if print_tables:
                 for form, msd in table:
                     if form in words:
                         form = "*" + form + "*"
                     msdprint = ','.join([m[0] + '=' + m[1] for m in msd])
-                    print (form + '\t' + msdprint).encode("utf-8")
+                    print((form + '\t' + msdprint).encode("utf-8"))
 
             if debug:
-               print "Members:", ", ".join([p(*[var[1] for var in vs])[0][0] for vs in p.var_insts])
+               print("Members:", ", ".join([p(*[var[1] for var in vs])[0][0] for vs in p.var_insts]))
         print
 
 
@@ -147,7 +154,7 @@ def build(inpfile, ngramorder, ngramprior):
     for pindex, p in enumerate(paradigms):
         numvars = (len(p.slots) - 1)/2
         slotmodels  = []
-        for v in xrange(0, numvars):
+        for v in range(0, int(numvars)):
             varinsts = p.slots[v*2+1][1]
             model = stringngram(varinsts, alphabet = alphabet, order = ngramorder, ngramprior = ngramprior)
             slotmodels.append(model)
@@ -155,37 +162,42 @@ def build(inpfile, ngramorder, ngramprior):
     return paradigms, numexamples, lms
 
 
-def test_paradigms(inp, paradigms, numexamples, lms, print_tables, debug, pprior, choose):
+def test_paradigms(inp, paradigms, numexamples, lms, print_tables, debug, pprior, choose, returnempty=True):
     res = []
     for line in inp:
+        tags = []
         if choose:
             word, lemgram = line.strip().split()
             words = [word]
+        elif type(line) == tuple:
+            words, tags = line
         else:
-            words = line.strip().split()
+            words = line #line.strip().split()
 
         if len(words) == 0:
             continue
 
         if choose:
-            print 'choose', lemgram
+            print('choose', lemgram)
             fittingparadigms = [(pindex, p) for pindex, p in enumerate(paradigms) if lemgram in p.members]
             #fittingparadigms = [(pindex, p) for pindex, p in enumerate(paradigms) if p.name==inppara]
         else:
             # Quick filter out most paradigms
             fittingparadigms = [(pindex, p) for pindex, p in enumerate(paradigms) if all(p.fits_paradigm(w, constrained = False) for w in words)]
 
-        fittingparadigms = filter(lambda p: eval_multiple_entries(p[1], words), fittingparadigms)
-        
+        fittingparadigms = filter(lambda p: eval_multiple_entries(p[1], words, tags), fittingparadigms)
+
         if debug:
         # Quick filter out most paradigms
-            print "Plausible paradigms:"
+            print("Plausible paradigms:")
             for pnum, p in fittingparadigms:
-                print pnum, p.name
+                print(pnum, p.name)
 
         analyses = []
         # Calculate score for each possible variable assignment
         for pindex, p in fittingparadigms:
+            print(p.name)
+            print("p.count",p.count)
             prior = math.log(p.count/float(numexamples))
             vars = eval_multiple_entries(p, words) # All possible instantiations
             if len(vars) == 0:
@@ -195,11 +207,13 @@ def test_paradigms(inp, paradigms, numexamples, lms, print_tables, debug, pprior
             else:
                 for v in vars:
                     score = prior * pprior + len(words) * eval_vars(v, lms[pindex])
+                    print('score = %s * %s + %s * %s([%s %s]) = %s' % (prior, pprior, len(words), eval_vars(v, lms[pindex]), v, lms[pindex], score))
                     #score = len(words) * eval_vars(v, lms[pindex])
                     analyses.append((score, p, v))
 
         analyses.sort(reverse = True, key = lambda x: x[0])
-        res.append((words, analyses))
+        if analyses or returnempty:
+            res.append((words, analyses))
     return res
 
 

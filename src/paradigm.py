@@ -2,6 +2,7 @@
 
 import re
 import sys
+print('paths', sys.path)
 import codecs
 from collections import defaultdict
 import regexmatcher
@@ -25,18 +26,21 @@ class Paradigm:
        var_insts:list(tuple)
             Ex: [[('1','dimm')],[('1','dank')], ...]
     """
-    
 
-    def __init__(self, form_msds, var_insts, prefix=None):
+    def __init__(self, form_msds, var_insts, prefix=None, p_id=None):
       self.p_info = {}
       self.forms = []
       self.var_insts = var_insts
+      self.p_id = p_id
       if prefix == None:
           self.prefix = ''
       else:
           self.prefix = prefix
       for (f,msd) in form_msds:
           self.forms.append(Form(f,msd,var_insts))
+
+    def set_p_id(self, p_id):
+        self.p_id = p_id
 
     def __getattr__(self,attr):
         if len(self.p_info) > 0: # Compute only once.
@@ -59,13 +63,13 @@ class Paradigm:
         """
         # string slots
         fs = [f.strs() for f in self.forms]
-        str_slots = zip(*fs)
+        str_slots = list(zip(*fs))
         # var slots
         vt = defaultdict(list)
         for vs in self.var_insts:
             for (v,s) in vs:
-                vt[v].append(s)        
-        var_slots = vt.items()
+                vt[v].append(s)
+        var_slots = list(vt.items())
         var_slots.sort(key=lambda x: x[0])
         (s_index,v_index) = (0,0)
         for i in range(len(str_slots) + len(var_slots)): # interleave strings and variables
@@ -83,15 +87,24 @@ class Paradigm:
                 return True
         return False
 
-    def match(self,w, selection=None, constrained=True):
+    # TODO test tag
+    def match(self, w, selection=None, constrained=True, tag=''):
+        print('look for',w)
         result = []
         if selection == None:
             forms = self.forms
         else:
-            forms = [self.forms[i]  for i in selection]
+            forms = [self.forms[i] for i in selection]
+        if tag:
+            print('filter for tag', tag, 'word', w)
+            print('tag', [f.msd for f in forms])
+            forms = [f for f in forms if f.msd == tag]
         for f in forms:
+            print('test',f)
             xs = f.match_vars(w, constrained)
+            print('got',xs)
             result.append(xs)
+        print('found', result)
         return result
 
     def paradigm_forms(self):
@@ -109,9 +122,9 @@ class Paradigm:
         return table
 
     def __str__(self):
-        p = "#".join([f.__unicode__() for f in self.forms])
+        p = "#".join([f.__str__() for f in self.forms])
         v = "#".join([",,".join(['%s=%s' % v for v in vs]) for vs in self.var_insts])
-        return ('%s\t%s' % (p,v)).encode('utf-8')
+        return '%s\t%s' % (p,v)
 
 class Form:
     """A class representing a paradigmatic wordform and, possibly, its
@@ -143,8 +156,13 @@ class Form:
             for (i,v) in vs:
                 collect_vars[i].add(v)
         self.v_regex = []
-        for (_,ss) in collect_vars.iteritems():
-            self.v_regex.append(re.compile(genregex.genregex(ss,pvalue=0.05).pyregex()))
+        for (_,ss) in collect_vars.items():
+        #for (_,ss) in collect_vars.iteritems():
+            try:
+                self.v_regex.append(re.compile(genregex.genregex(ss,pvalue=0.05).pyregex()))
+            except:
+                print('error', ss)
+                raise
 
     def shapes(self, ss):
         w = "".join(self.__call__(*ss)[0])
@@ -154,7 +172,7 @@ class Form:
                 'regex':self.regex,
                 'cregex':self.cregex,
                 'v_regex':self.v_regex}
-                                    
+
     def __call__(self,*insts):
         """Instantiate the variables of the wordform.
            Args:
@@ -169,11 +187,11 @@ class Form:
             else:
                 w.append(p)
         return (w, self.msd)
-    
-    def match(self,w,constrained=True):
+
+    def match(self, w, constrained=True):
             return self.match_vars(w,constrained) != None
-        
-    def match_vars(self,w, constrained=True):
+
+    def match_vars(self, w, constrained=True):
         matcher = regexmatcher.mregex(self.regex)
         ms = matcher.findall(w)
         if ms == None:
@@ -225,7 +243,7 @@ class Form:
             ss.append('_')
         return ss
 
-    def __unicode__(self):
+    def __str__(self):
         ms = []
         for (t,v) in self.msd:
             if t != None:
@@ -269,7 +287,7 @@ def load_file(file):
                paradigms.append((len(p_members),wfs,p_members))
                line_no += 1
         except:
-            print 'Error on line', line_no
+            print('Error on line', line_no)
             raise
     paradigms.sort(reverse=True)
     return [Paradigm(wfs,p_members, 'p%d_' % i) for (i,(_,wfs,p_members)) in enumerate(paradigms,1)]
@@ -281,24 +299,24 @@ def pr(i,b):
 if __name__ == '__main__':
     if '-p' in sys.argv:
         for p in load_file(sys.argv[-1]):
-            print ('name: %s, count: %d' % (p.name,p.count)).encode('utf-8')
+            print('name: %s, count: %d' % (p.name,p.count))
             #if len(p.var_insts) > 0:
-            print ('members: %s' % (", ".join(p.members))).encode('utf-8')
+            print('members: %s' % (", ".join(p.members)))
                 #print ('members: %s' % (", ".join([p(*[v[1] for v in vs])[0][0] for vs in p.var_insts]))).encode('utf-8')
             #else:
                 #print ('members: %s' % (p()[0][0])).encode('utf-8')
             for f in p.forms:
-                print unicode(f).replace('::','\t').encode('utf-8')
-            print
+                print(str(f).replace('::','\t')) #.encode('utf-8')
+            print()
     elif '-s' in sys.argv:
         for p in load_file(sys.argv[-1]):
-            print ('%s: %d' % (p.name,p.count)).encode('utf-8')
+            print('%s: %d' % (p.name,p.count)) #.encode('utf-8')
             # print the content of the slots
             for (i,(is_var, s)) in enumerate(p.slots):
-                print ('%s: %s' % (pr(i, is_var)," ".join(s))).encode('utf-8')
-            print
+                print('%s: %s' % (pr(i, is_var)," ".join(s))) #.encode('utf-8')
+            print()
     elif '-t' in sys.argv:
         load_file(sys.argv[-1])
 
     else:
-            print 'Usage: <program> [-p|-s] <paradigm_file>'
+            print('Usage: <program> [-p|-s] <paradigm_file>')

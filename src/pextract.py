@@ -1,5 +1,6 @@
 import codecs
 import sys
+import functools
 import itertools
 import re
 import paradigm
@@ -12,8 +13,8 @@ class wordgraph:
     @classmethod
     def wordtograph(cls, word):
         trans = {}
-        for i in xrange(len(word)):
-            for j in xrange(i,len(word)):
+        for i in range(len(word)):
+            for j in range(i,len(word)):
                 if (i,word[j]) not in trans:
                     trans[(i,word[j])] = j+1
         grph = cls(trans)
@@ -109,7 +110,7 @@ class wordgraph:
             S = Snew
             step += 1
 
-        endstates = [key for key,val in maxlen.iteritems() if val == max(maxlen.values())]
+        endstates = [key for key,val in maxlen.items() if val == max(maxlen.values())]
         self.longestwords = []
         for w in endstates:
             self._backtrace(maxsources, maxlen, w, [])
@@ -173,7 +174,7 @@ def string_to_varstring(string, vars):
             idx += 1
             while string[idx] != u']':
                 idx += len(vars[varpos])
-                s.append(unicode(varpos+1))
+                s.append(str(varpos+1))
                 if idx < len(string) - 1:
                     s.append(u'+')
                 varpos += 1
@@ -284,7 +285,7 @@ def findfactors(word, lcs):
 # [table, c,variabletable,variablelist,numvars,infixcount]
 
 def vars_to_string(baseform, varlist):
-    vstr = [(unicode(idx+1), v) for idx, v in enumerate(varlist)]
+    vstr = [(str(idx+1), v) for idx, v in enumerate(varlist)]
     return [("0", baseform)]+vstr
 
 def split_tags(tags):
@@ -296,7 +297,7 @@ def split_tags(tags):
         newelement = []
         for tagelement in form:
             if tagelement == u'':
-                newelement.append((unicode(ctr), u'1'))
+                newelement.append((str(ctr), u'1'))
             elif u'=' in tagelement:
                 splittag = tagelement.split(u'=')
                 newelement.append((splittag[0], splittag[1]))
@@ -328,7 +329,12 @@ def collapse_tables(tables):
         varstring.append(vars_to_string(tab[0], t[3]))
         splittags = split_tags(tags)
         formlist = zip(t[2], splittags)
-        p = paradigm.Paradigm(formlist, varstring)
+        try:
+            p = paradigm.Paradigm(formlist, varstring)
+        except:
+            print(formlist)
+            print(varstring)
+            raise
         paradigms.append(p)
     return paradigms
 
@@ -353,7 +359,7 @@ def ffilter_leftmost_sum(factorlist):
 
 
 def filterbracketings(factorlist, functionlist, tablecap):
-    numcombinations = lambda f: reduce(lambda x, y: x*len(y), f, 1)
+    numcombinations = lambda f: functools.reduce(lambda x, y: x*len(y), f, 1)
     if numcombinations(factorlist) > tablecap:
         for filterfunc in functionlist:
             factorlist = filterfunc(factorlist)
@@ -369,7 +375,7 @@ def learnparadigms(inflectiontables):
         tablehead, table = table[0], table[1:]
         taghead, tagtable = tagtable[0], tagtable[1:]
         wg = [wordgraph.wordtograph(x) for x in table]
-        result = reduce(lambda x, y: x & y, wg)
+        result = functools.reduce(lambda x, y: x & y, wg)
         lcss = result.longestwords
         if not lcss: # Table has no LCS - no variables
             vartables.append((tablehead, taghead, [[table,table,table,[],0,0]], tagtable))
@@ -382,7 +388,7 @@ def learnparadigms(inflectiontables):
             combinations = itertools.product(*factorlist)
             for c in combinations:
                 (numvars, variablelist) = evalfact(lcs, c)
-                infixcount = reduce(lambda x,y: x + count_infix_segments(y), c, 0)
+                infixcount = functools.reduce(lambda x,y: x + count_infix_segments(y), c, 0)
                 variabletable = [string_to_varstring(s, variablelist) for s in c]
                 combos.append([table,c,variabletable,variablelist,numvars,infixcount])
 
@@ -426,4 +432,4 @@ if __name__ == '__main__':
 
     learnedparadigms = learnparadigms(tables)
     for p in learnedparadigms:
-        print p
+        print(p)
