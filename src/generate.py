@@ -1,6 +1,5 @@
 from morphparser import eval_multiple_entries
 import paradigm as P
-import pextract.pextract as pex
 import sys
 
 debug = False

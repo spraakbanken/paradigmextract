@@ -206,8 +206,9 @@ def test_paradigms(inp, paradigms, numexamples, lms, print_tables, debug, pprior
                 analyses.append((score, p, ()))
             else:
                 for v in vars:
-                    score = prior * pprior + len(words) * eval_vars(v, lms[pindex])
-                    print('score = %s * %s + %s * %s([%s %s]) = %s' % (prior, pprior, len(words), eval_vars(v, lms[pindex]), v, lms[pindex], score))
+                    lm_score = 1 if len(lms) < pindex else lms[pindex]
+                    score = prior * pprior + len(words) * eval_vars(v, lm_score)
+                    print('score = %s * %s + %s * %s([%s %s]) = %s' % (prior, pprior, len(words), eval_vars(v, lm_score), v, lms[pindex], score))
                     #score = len(words) * eval_vars(v, lms[pindex])
                     analyses.append((score, p, v))
 
