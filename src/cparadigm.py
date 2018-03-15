@@ -15,7 +15,7 @@ class PClasses:
     def __init__(self, pfile):
         # (pname, paradigm forms)
         self.ptable = dict([(p.name, (['+'.join(f.form) for f in p.forms],p) )
-                                                      for p in paradigm.load_file(pfile)])
+                                                      for p in paradigm.load_p_file(pfile)])
         # compatibility adjacency graph
         self.compat_graph = self._build_compat_graph()
     

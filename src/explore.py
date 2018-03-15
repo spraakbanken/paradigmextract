@@ -281,7 +281,7 @@ def print_inflection(ans):
 def loop():
     " The main loop "
     parafile = sys.argv[1]
-    paradigms = P.load_file(parafile)
+    paradigms = P.load_p_file(parafile)
     parafile = codecs.open(parafile, encoding='utf8').readlines()
     readline.parse_and_bind('tab: complete')
     while True:

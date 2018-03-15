@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import json
 import re
 import sys
 print('paths', sys.path)
@@ -27,39 +28,47 @@ class Paradigm:
             Ex: [[('1','dimm')],[('1','dank')], ...]
     """
 
-    def __init__(self, form_msds, var_insts, prefix=None, p_id=None):
+    def __init__(self, form_msds, var_insts, p_id=''):
+    #def __init__(self, paradigm):
+    # prefix: just for naming, exclude since we have p_id?
+    #def __init__(self, form_msds, var_insts, prefix=None, p_id=None):
       self.p_info = {}
       self.forms = []
       self.var_insts = var_insts
       self.p_id = p_id
-      if prefix == None:
-          self.prefix = ''
-      else:
-          self.prefix = prefix
+
       for (f,msd) in form_msds:
           self.forms.append(Form(f,msd,var_insts))
 
-    def set_p_id(self, p_id):
+    def set_id(self, p_id):
         self.p_id = p_id
 
     def __getattr__(self,attr):
+        # TODO maybe recompute at times?
         if len(self.p_info) > 0: # Compute only once.
             return self.p_info[attr]
         else:
+            if self.p_id:
+                self.p_info['name'] = self.p_id
             if len(self.var_insts) != 0:
-                self.p_info['name'] = self.prefix + self.__call__(*[s for (_,s) in self.var_insts[0][1:]])[0][0]
+                # TODO don't use name??
+                if not self.p_id:
+                    self.p_info['name'] = self.__call__(*[s for (_,s) in self.var_insts[0][1:]])[0][0]
+                # TODO it should be possible to update this
                 self.p_info['count'] = len(self.var_insts)
+                # TODO it should be possible to update this
                 self.p_info['members'] = [var[0][1] for var in self.var_insts]
             else: # no variables
-                self.p_info['name'] = self.prefix + self.__call__()[0][0]
+                if not self.p_id:
+                    self.p_info['name'] = self.__call__()[0][0]
                 self.p_info['count'] = 1
+            # TODO why recompute this?
             self.p_info['slots'] = self.__slots()
         return self.p_info[attr]
 
     def __slots(self):
         slts = []
-        """Compute the content
-         of the slots.
+        """Compute the content of the slots.
         """
         # string slots
         fs = [f.strs() for f in self.forms]
@@ -121,6 +130,21 @@ class Paradigm:
             table.append((''.join(w), msd))
         return table
 
+    # TODO function for construction paradigm lmf-json objects
+    def jsonify(self):
+        paradigm = {}
+        paradigm['MorphologicalPatternID'] = self.name
+        paradigm['VariableInstances'] = []
+        for var_inst in self.var_insts:
+            paradigm['VariableInstances'].append({})
+            for v, i in var_inst:
+                paradigm['VariableInstances'][-1][v] = i
+
+            print('var_inst', var_inst)
+
+        paradigm["TransformSet"] = [form.jsonify() for form in self.forms]
+        return json.dumps(paradigm)
+
     def __str__(self):
         p = "#".join([f.__str__() for f in self.forms])
         v = "#".join([",,".join(['%s=%s' % v for v in vs]) for vs in self.var_insts])
@@ -157,7 +181,6 @@ class Form:
                 collect_vars[i].add(v)
         self.v_regex = []
         for (_,ss) in collect_vars.items():
-        #for (_,ss) in collect_vars.iteritems():
             try:
                 self.v_regex.append(re.compile(genregex.genregex(ss,pvalue=0.05).pyregex()))
             except:
@@ -243,6 +266,34 @@ class Form:
             ss.append('_')
         return ss
 
+    def jsonify(self):
+        gram = {}
+        process = []
+        for (t,v) in self.msd:
+            if t != None:
+                if v != None:
+                    gram[t] = v
+                else:
+                    gram[t] = ''
+            else:
+                if v != None:
+                    gram['msd'] = 'v'
+        for part in self.form:
+            if part.isdigit():
+                pr = {"operator": "addAfter",
+	              "processType": "pextractAddVariable",
+                      "variableNum": part
+                      }
+                process.append(pr)
+            else:
+                pr = {"operator": "addAfter",
+	              "processType": "pextractAddConstant",
+                      "stringValue": part
+                      }
+                process.append(pr)
+        return {"Process": process, "GrammaticalFeatures": gram,
+                "TransformCategory": {}, "feat": [{}]}
+
     def __str__(self):
         ms = []
         for (t,v) in self.msd:
@@ -259,7 +310,7 @@ class Form:
         else:
             return "%s::%s" % ("+".join(self.form), ",,".join(ms))
 
-def load_file(file):
+def load_p_file(file):
     paradigms = []
     line_no = 1
     with codecs.open(file,encoding='utf-8') as f:
@@ -292,13 +343,42 @@ def load_file(file):
     paradigms.sort(reverse=True)
     return [Paradigm(wfs,p_members, 'p%d_' % i) for (i,(_,wfs,p_members)) in enumerate(paradigms,1)]
 
+
+def load_json_file(file):
+    paradigms = []
+    #with codecs.open(file,encoding='utf-8') as f:
+    obj_no = 1
+    try:
+        for paradigm in json.load(codecs.open(file,encoding='utf-8')):
+          var_insts = [list(inst.items()) for inst in paradigm.get('VariableInstances', [])]
+          p_id = paradigm.get('MorphologicalPatternID', '')
+          form_msd = []
+          for transform in paradigm.get("TransformSet", []):
+              f = []
+              for p in transform.get("Process", []):
+              # TODO check processType? and operator?
+                  if p.get('processType', '') == "pextractAddVariable":
+                      f.append(p['variableNum'])
+                  if p.get('processType', '') == "pextractAddConstant":
+                      f.append(p['stringValue'])
+              msd = transform.get('GrammaticalFeatures').items()
+              form_msd.append(('+'.join(f), msd))
+          paradigms.append((form_msd, var_insts, p_id))
+          obj_no += 1
+    except Exception as e:
+        print('Error on object %d:\n %s' % (obj_no, e))
+        raise
+    paradigms.sort(reverse=True)
+    return [Paradigm(wfs, p_members, p_id) for (wfs, p_members, _id) in paradigms]
+
+
 def pr(i,b):
   if b: return '[v] %d' % (i)
   else: return '[s] %d' % (i)
 
 if __name__ == '__main__':
     if '-p' in sys.argv:
-        for p in load_file(sys.argv[-1]):
+        for p in load_p_file(sys.argv[-1]):
             print('name: %s, count: %d' % (p.name,p.count))
             #if len(p.var_insts) > 0:
             print('members: %s' % (", ".join(p.members)))
@@ -308,15 +388,29 @@ if __name__ == '__main__':
             for f in p.forms:
                 print(str(f).replace('::','\t')) #.encode('utf-8')
             print()
+            print(p)
+    elif '-j' in sys.argv:
+        for p in load_json_file(sys.argv[-1]):
+            print('name: %s, count: %d' % (p.name,p.count))
+            #if len(p.var_insts) > 0:
+            print('members: %s' % (", ".join(p.members)))
+                #print ('members: %s' % (", ".join([p(*[v[1] for v in vs])[0][0] for vs in p.var_insts]))).encode('utf-8')
+            #else:
+                #print ('members: %s' % (p()[0][0])).encode('utf-8')
+            for f in p.forms:
+                print(str(f).replace('::','\t')) #.encode('utf-8')
+            print()
+            print(p)
+            print(p.jsonify())
     elif '-s' in sys.argv:
-        for p in load_file(sys.argv[-1]):
+        for p in load_p_file(sys.argv[-1]):
             print('%s: %d' % (p.name,p.count)) #.encode('utf-8')
             # print the content of the slots
             for (i,(is_var, s)) in enumerate(p.slots):
                 print('%s: %s' % (pr(i, is_var)," ".join(s))) #.encode('utf-8')
             print()
     elif '-t' in sys.argv:
-        load_file(sys.argv[-1])
+        load_p_file(sys.argv[-1])
 
     else:
             print('Usage: <program> [-p|-s] <paradigm_file>')

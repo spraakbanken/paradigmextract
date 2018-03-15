@@ -5,7 +5,7 @@ import sys
 debug = False
 
 def main(inp, parafile):
-    paradigms = P.load_file(parafile) # [(occurrence_count, name, paradigm),...,]
+    paradigms = P.load_p_file(parafile) # [(occurrence_count, name, paradigm),...,]
     res = test_paradigms(inp, paradigms, debug)
     for lemgram, words, analyses in res:
         for aindex, (p, v) in enumerate(analyses):

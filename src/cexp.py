@@ -22,7 +22,7 @@ def read_data(file):
                 table = []
     return data
      
-ps = paradigm.load_file(sys.argv[1])
+ps = paradigm.load_p_file(sys.argv[1])
 ds = read_data(sys.argv[2])
 
 exp = []

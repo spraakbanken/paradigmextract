@@ -109,7 +109,7 @@ def main(argv):
         elif opt in ('-n', '--name'):
             Gname = arg
     
-    paradigms = paradigm.load_file(remainder[0])
+    paradigms = paradigm.load_p_file(remainder[0])
     
     analyzers = []
     analyzernames = []

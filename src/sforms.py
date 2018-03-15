@@ -24,7 +24,7 @@ def extract_form_information(ps,only_lemma=False):
     result.sort(reverse=True)
     return result
 
-for (n,f,xs) in extract_form_information(paradigm.load_file(sys.argv[1]),'-l' in sys.argv):
+for (n,f,xs) in extract_form_information(paradigm.load_p_file(sys.argv[1]),'-l' in sys.argv):
       if len(xs) > 1: # we only print the ambiguous forms.
         xs = sorted(xs,reverse=True)
         wfs = ralign([x[2] for x in xs])

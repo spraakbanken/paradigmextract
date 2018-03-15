@@ -144,7 +144,7 @@ def main(argv):
 
 
 def build(inpfile, ngramorder, ngramprior):
-    paradigms = paradigm.load_file(inpfile) # [(occurrence_count, name, paradigm),...,]
+    paradigms = paradigm.load_p_file(inpfile) # [(occurrence_count, name, paradigm),...,]
     alphabet = paradigms_to_alphabet(paradigms)
 
     numexamples = sum(map(lambda x: x.count, paradigms))
