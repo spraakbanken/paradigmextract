@@ -70,7 +70,10 @@ def paradigms_to_alphabet(paradigms):
 
 
 def eval_vars(matches, lm):
-    return sum(lm[1][midx].evaluate(m) for midx, m in enumerate(matches))
+    if lm:
+        return sum(lm[1][midx].evaluate(m) for midx, m in enumerate(matches))
+    else:
+        return 1
 
 
 def eval_multiple_entries(p, words, tags=[]):
@@ -206,6 +209,7 @@ def test_paradigms(inp, paradigms, numexamples, lms, print_tables, debug, pprior
                 analyses.append((score, p, ()))
             else:
                 for v in vars:
+                    # TODO lm_score is not an int, set to 0 or []?
                     lm_score = 1 if len(lms) < pindex else lms[pindex]
                     score = prior * pprior + len(words) * eval_vars(v, lm_score)
                     print('score = %s * %s + %s * %s([%s %s]) = %s' % (prior, pprior, len(words), eval_vars(v, lm_score), v, lms[pindex], score))

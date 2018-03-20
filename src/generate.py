@@ -1,4 +1,5 @@
-from morphparser import eval_multiple_entries
+import math
+from morphparser import eval_multiple_entries, eval_vars
 import paradigm as P
 import sys
 
@@ -8,7 +9,7 @@ def main(inp, parafile):
     paradigms = P.load_p_file(parafile) # [(occurrence_count, name, paradigm),...,]
     res = test_paradigms(inp, paradigms, debug)
     for lemgram, words, analyses in res:
-        for aindex, (p, v) in enumerate(analyses):
+        for aindex, (score, p, v) in enumerate(analyses):
             table = p(*v)          # Instantiate table with vars from analysis
             for form, msd in table:
                 # if form in words:
@@ -19,9 +20,10 @@ def main(inp, parafile):
 
 
 
-def test_paradigms(inp, paradigms, debug, kbest=1, vbest=3):
+def test_paradigms(inp, paradigms, debug, kbest=1, vbest=3, pprior=0, lms=[], numexamples=1):
     res = []
     for line in inp:
+        print('line', line)
         word, lemgram = line.strip().split('\t')
         lemgrams = lemgram.split('|')
         if debug:
@@ -38,18 +40,24 @@ def test_paradigms(inp, paradigms, debug, kbest=1, vbest=3):
                 print(pnum, p.name)
 
 
-        # Calculate score for each possible variable assignment
+        # TODO Calculate score for each possible variable assignment
         for pindex, p in fittingparadigms[:kbest]:
             analyses = []
             print('paradigm', pindex, p.name)
             vars = eval_multiple_entries(p, words) # All possible instantiations
+            prior = math.log(p.count/float(numexamples))
             if len(vars) == 0:
                 # Word matches
-                analyses.append((p, ()))
+                score = prior
+                analyses.append((score, p, ()))
             else:
                 for v in list(vars)[:vbest]:
+                    print('pindex',pindex,len(lms))
+                    lm_score = 0 if len(lms) <= pindex else lms[pindex]
+                    score = prior * pprior + len(words) * eval_vars(v, lm_score)
+                    print('vars score',eval_vars(v, lm_score))
                     print('add another v', v)
-                    analyses.append((p, v))
+                    analyses.append((score, p, v))
 
             if len(lemgrams) == 1:
                 example = lemgram

@@ -3,7 +3,6 @@
 import json
 import re
 import sys
-print('paths', sys.path)
 import codecs
 from collections import defaultdict
 import regexmatcher
@@ -33,7 +32,6 @@ class Paradigm:
     # prefix: just for naming, exclude since we have p_id?
     #def __init__(self, form_msds, var_insts, prefix=None, p_id=None):
       self.p_info = {}
-      self.forms = []
       self.var_insts = var_insts
       self.p_id = p_id
 
@@ -43,7 +41,8 @@ class Paradigm:
     def set_id(self, p_id):
         self.p_id = p_id
 
-    def __getattr__(self,attr):
+
+    def __getattr__(self, attr):
         # TODO maybe recompute at times?
         if len(self.p_info) > 0: # Compute only once.
             return self.p_info[attr]
@@ -57,7 +56,6 @@ class Paradigm:
                 # TODO it should be possible to update this
                 self.p_info['count'] = len(self.var_insts)
                 # TODO it should be possible to update this
-                self.p_info['members'] = [var[0][1] for var in self.var_insts]
             else: # no variables
                 if not self.p_id:
                     self.p_info['name'] = self.__call__()[0][0]
@@ -98,22 +96,16 @@ class Paradigm:
 
     # TODO test tag
     def match(self, w, selection=None, constrained=True, tag=''):
-        print('look for',w)
         result = []
         if selection == None:
             forms = self.forms
         else:
             forms = [self.forms[i] for i in selection]
         if tag:
-            print('filter for tag', tag, 'word', w)
-            print('tag', [f.msd for f in forms])
             forms = [f for f in forms if f.msd == tag]
         for f in forms:
-            print('test',f)
             xs = f.match_vars(w, constrained)
-            print('got',xs)
             result.append(xs)
-        print('found', result)
         return result
 
     def paradigm_forms(self):
@@ -140,10 +132,9 @@ class Paradigm:
             for v, i in var_inst:
                 paradigm['VariableInstances'][-1][v] = i
 
-            print('var_inst', var_inst)
 
         paradigm["TransformSet"] = [form.jsonify() for form in self.forms]
-        return json.dumps(paradigm)
+        return paradigm  #json.dumps(paradigm)
 
     def __str__(self):
         p = "#".join([f.__str__() for f in self.forms])
@@ -292,7 +283,7 @@ class Form:
                       }
                 process.append(pr)
         return {"Process": process, "GrammaticalFeatures": gram,
-                "TransformCategory": {}, "feat": [{}]}
+                "TransformCategory": {}, "feat": []}
 
     def __str__(self):
         ms = []
@@ -309,6 +300,7 @@ class Form:
             return "+".join(self.form)
         else:
             return "%s::%s" % ("+".join(self.form), ",,".join(ms))
+
 
 def load_p_file(file):
     paradigms = []
@@ -341,7 +333,7 @@ def load_p_file(file):
             print('Error on line', line_no)
             raise
     paradigms.sort(reverse=True)
-    return [Paradigm(wfs,p_members, 'p%d_' % i) for (i,(_,wfs,p_members)) in enumerate(paradigms,1)]
+    return [Paradigm(wfs,p_members, 'p%d_%s' % (i, p_members[0][0][1])) for (i,(_,wfs,p_members)) in enumerate(paradigms,1)]
 
 
 def load_json_file(file):
@@ -411,6 +403,8 @@ if __name__ == '__main__':
             print()
     elif '-t' in sys.argv:
         load_p_file(sys.argv[-1])
+    elif '-jt' in sys.argv:
+        load_json_file(sys.argv[-1])
 
     else:
             print('Usage: <program> [-p|-s] <paradigm_file>')
