@@ -146,7 +146,7 @@ def main(argv):
         print
 
 
-def build(inpfile, ngramorder, ngramprior):
+def build(inpfile, ngramorder, ngramprior, small=False):
     paradigms = paradigm.load_p_file(inpfile) # [(occurrence_count, name, paradigm),...,]
     alphabet = paradigms_to_alphabet(paradigms)
 
@@ -162,6 +162,8 @@ def build(inpfile, ngramorder, ngramprior):
             model = stringngram(varinsts, alphabet = alphabet, order = ngramorder, ngramprior = ngramprior)
             slotmodels.append(model)
         lms.append((numvars, slotmodels))
+        if small:
+            p.shrink()
     return paradigms, numexamples, lms
 
 

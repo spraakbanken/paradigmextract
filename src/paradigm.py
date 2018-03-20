@@ -27,12 +27,17 @@ class Paradigm:
             Ex: [[('1','dimm')],[('1','dank')], ...]
     """
 
-    def __init__(self, form_msds, var_insts, p_id=''):
+    def __init__(self, form_msds, var_insts, p_id='', small=False):
     #def __init__(self, paradigm):
     # prefix: just for naming, exclude since we have p_id?
     #def __init__(self, form_msds, var_insts, prefix=None, p_id=None):
       self.p_info = {}
-      self.var_insts = var_insts
+      self.small = small
+      self.forms = []
+      if  small:
+          self.var_insts = []
+      else:
+          self.var_insts = var_insts
       self.p_id = p_id
 
       for (f,msd) in form_msds:
@@ -40,6 +45,11 @@ class Paradigm:
 
     def set_id(self, p_id):
         self.p_id = p_id
+
+    def shrink(self):
+        self.var_insts = []
+        self.members = []
+        self.small = small
 
 
     def __getattr__(self, attr):
@@ -57,6 +67,7 @@ class Paradigm:
                 self.p_info['count'] = len(self.var_insts)
                 # TODO it should be possible to update this
             else: # no variables
+                # TODO name might get weird without var_insts
                 if not self.p_id:
                     self.p_info['name'] = self.__call__()[0][0]
                 self.p_info['count'] = 1
