@@ -19,9 +19,29 @@ def main(inp, parafile):
             print
 
 
+def test_member_paradigms(inp, paradigms, debug, kbest=1, vbest=3, pprior=0, lms=[], numexamples=1):
+    def is_fitting(p, match):
+        return any(l in p.members for l in match)
+    return test_paradigms(inp, paradigms, debug, fitting=is_fitting,
+                          kbest=kbest, vbest=vbest, pprior=pprior, lms=lms,
+                          numexamples=numexamples)
 
-def test_paradigms(inp, paradigms, debug, kbest=1, vbest=3, pprior=0, lms=[], numexamples=1):
+
+def test_name_paradigms(inp, paradigms, debug, kbest=1, vbest=3, pprior=0, lms=[], numexamples=1):
+    def is_fitting(p, match):
+        print('test',p.name, match)
+        return any(l == p.name for l in match)
+
+    return test_paradigms(inp, paradigms, debug, fitting=is_fitting,
+                          kbest=kbest, vbest=vbest, pprior=pprior, lms=lms,
+                          numexamples=numexamples)
+
+
+def test_paradigms(inp, paradigms, debug, fitting=None, kbest=1, vbest=3, pprior=0, lms=[], numexamples=1):
     res = []
+    if fitting is None:
+        fitting = lambda p, match: True
+
     for line in inp:
         print('line', line)
         word, lemgram = line.strip().split('\t')
@@ -32,7 +52,8 @@ def test_paradigms(inp, paradigms, debug, kbest=1, vbest=3, pprior=0, lms=[], nu
         if len(words) == 0:
             continue
 
-        fittingparadigms = [(pindex, p) for pindex, p in enumerate(paradigms) if any(l in p.members for l in lemgrams)]
+        print('all paradigms', [(pindex, p.members[0]) for pindex, p in enumerate(paradigms)])
+        fittingparadigms = [(pindex, p) for pindex, p in enumerate(paradigms) if fitting(p, lemgrams)]
         if debug:
         # Quick filter out most paradigms
             print("Plausible paradigms:")
@@ -44,7 +65,9 @@ def test_paradigms(inp, paradigms, debug, kbest=1, vbest=3, pprior=0, lms=[], nu
         for pindex, p in fittingparadigms[:kbest]:
             analyses = []
             print('paradigm', pindex, p.name)
+            print('eval entries', p, words)
             vars = eval_multiple_entries(p, words) # All possible instantiations
+            print('vars', vars)
             prior = math.log(p.count/float(numexamples))
             if len(vars) == 0:
                 # Word matches

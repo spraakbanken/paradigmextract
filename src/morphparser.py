@@ -146,8 +146,13 @@ def main(argv):
         print
 
 
-def build(inpfile, ngramorder, ngramprior, small=False):
-    paradigms = paradigm.load_p_file(inpfile) # [(occurrence_count, name, paradigm),...,]
+def build(inpfile, ngramorder, ngramprior, small=False, lexicon='', inpformat='pfile'):
+    if inpformat == 'pfile':
+        paradigms = paradigm.load_p_file(inpfile, lex=lexicon) # [(occurrence_count, name, paradigm),...,]
+    elif inpformat == 'jsonfile':
+        paradigms = paradigm.load_json_file(inpfile)
+    elif inpformat == 'json':
+        paradigms = paradigm.load_json(inpfile)
     alphabet = paradigms_to_alphabet(paradigms)
 
     numexamples = sum(map(lambda x: x.count, paradigms))
@@ -163,11 +168,12 @@ def build(inpfile, ngramorder, ngramprior, small=False):
             slotmodels.append(model)
         lms.append((numvars, slotmodels))
         if small:
+            print('shrink')
             p.shrink()
     return paradigms, numexamples, lms
 
 
-def test_paradigms(inp, paradigms, numexamples, lms, print_tables, debug, pprior, choose, returnempty=True):
+def test_paradigms(inp, paradigms, numexamples, lms, print_tables, debug, pprior, choose=False, returnempty=True):
     res = []
     for line in inp:
         tags = []
@@ -212,9 +218,9 @@ def test_paradigms(inp, paradigms, numexamples, lms, print_tables, debug, pprior
             else:
                 for v in vars:
                     # TODO lm_score is not an int, set to 0 or []?
-                    lm_score = 1 if len(lms) < pindex else lms[pindex]
+                    lm_score = 0 if len(lms) <= pindex else lms[pindex]
                     score = prior * pprior + len(words) * eval_vars(v, lm_score)
-                    print('score = %s * %s + %s * %s([%s %s]) = %s' % (prior, pprior, len(words), eval_vars(v, lm_score), v, lms[pindex], score))
+                    #print('score = %s * %s + %s * %s([%s %s]) = %s' % (prior, pprior, len(words), eval_vars(v, lm_score), v, lms[pindex], score))
                     #score = len(words) * eval_vars(v, lms[pindex])
                     analyses.append((score, p, v))
 

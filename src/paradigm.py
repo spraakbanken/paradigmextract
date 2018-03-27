@@ -27,13 +27,18 @@ class Paradigm:
             Ex: [[('1','dimm')],[('1','dank')], ...]
     """
 
-    def __init__(self, form_msds, var_insts, p_id='', small=False):
+    def __init__(self, form_msds, var_insts, p_id='', small=False, pos='', lex=''):
     #def __init__(self, paradigm):
     # prefix: just for naming, exclude since we have p_id?
     #def __init__(self, form_msds, var_insts, prefix=None, p_id=None):
+      print('make paradigm', form_msds, var_insts, p_id)
       self.p_info = {}
       self.small = small
+      self.classes = {}
       self.forms = []
+      self.pos = pos
+      self.lex = lex
+      self.uuid = ''
       if  small:
           self.var_insts = []
       else:
@@ -46,11 +51,24 @@ class Paradigm:
     def set_id(self, p_id):
         self.p_id = p_id
 
+    def set_uuid(self, uuid):
+        self.uuid = uuid
+
+    def set_pos(self, pos):
+        self.pos = pos
+
+    def set_lexicon(self, lexicon):
+        self.lex = lexicon
+
     def shrink(self):
         self.var_insts = []
         self.members = []
-        self.small = small
+        self.small = True
 
+    def add_class(self, name, members):
+        if name not in self.classes:
+            self.classes[name] = []
+        self.classes[name].extend(members)
 
     def __getattr__(self, attr):
         # TODO maybe recompute at times?
@@ -66,6 +84,7 @@ class Paradigm:
                 # TODO it should be possible to update this
                 self.p_info['count'] = len(self.var_insts)
                 # TODO it should be possible to update this
+                self.p_info['members'] = [var[0][1] for var in self.var_insts]
             else: # no variables
                 # TODO name might get weird without var_insts
                 if not self.p_id:
@@ -80,7 +99,7 @@ class Paradigm:
         """Compute the content of the slots.
         """
         # string slots
-        fs = [f.strs() for f in self.forms]
+        fs = [f.strs() for f in self.forms if not f.identifier]
         str_slots = list(zip(*fs))
         # var slots
         vt = defaultdict(list)
@@ -100,8 +119,9 @@ class Paradigm:
         return slts
 
     def fits_paradigm(self,w, constrained=True):
+        # TODO will this make word fail if you provide all forms+identifier?
         for f in self.forms:
-            if f.match(w, constrained):
+            if f.match(w, constrained) and not f.identifier:
                 return True
         return False
 
@@ -109,7 +129,7 @@ class Paradigm:
     def match(self, w, selection=None, constrained=True, tag=''):
         result = []
         if selection == None:
-            forms = self.forms
+            forms = [f for f in self.forms if not f.identifier]
         else:
             forms = [self.forms[i] for i in selection]
         if tag:
@@ -133,24 +153,40 @@ class Paradigm:
             table.append((''.join(w), msd))
         return table
 
-    # TODO function for construction paradigm lmf-json objects
+    # function for construction paradigm lmf-json objects
     def jsonify(self):
         paradigm = {}
+        paradigm['_lexiconName'] = self.lex
+        # TODO karp need lexiconName
+        paradigm['lexiconName'] = self.lex
+        paradigm['_partOfSpeech'] = self.pos
+        paradigm['_entries'] = len(self.members)
+        paradigm['_uuid'] = self.uuid
         paradigm['MorphologicalPatternID'] = self.name
         paradigm['VariableInstances'] = []
         for var_inst in self.var_insts:
             paradigm['VariableInstances'].append({})
             for v, i in var_inst:
+                if v in ["0", 0]:
+                    v = "first-attest"
                 paradigm['VariableInstances'][-1][v] = i
 
+        # TODO is this translated in the other direction?
+        paradigm['TransformCategory'] = {}
+        for key, mem in self.classes.items():
+            paradigm['TransformCategory'][key] = mem
 
-        paradigm["TransformSet"] = [form.jsonify() for form in self.forms]
+        paradigm["TransformSet"] = [form.jsonify() for form in self.forms if not form.identifier]
         return paradigm  #json.dumps(paradigm)
+
+    def pattern(self):
+       return "#".join([f.__str__() for f in self.forms])
 
     def __str__(self):
         p = "#".join([f.__str__() for f in self.forms])
         v = "#".join([",,".join(['%s=%s' % v for v in vs]) for vs in self.var_insts])
         return '%s\t%s' % (p,v)
+
 
 class Form:
     """A class representing a paradigmatic wordform and, possibly, its
@@ -167,6 +203,7 @@ class Form:
     def __init__(self, form, msd=[], v_insts=[]):
         (self.form,self.msd) = (form.split('+'), msd)
         self.scount = 0
+        self.identifier = len(msd) > 0 and len(msd[0]) > 0 and msd[0][1] == "identifier"
         r = ''
         for f in self.form:
             if f.isdigit():
@@ -293,8 +330,8 @@ class Form:
                       "stringValue": part
                       }
                 process.append(pr)
-        return {"Process": process, "GrammaticalFeatures": gram,
-                "TransformCategory": {}, "feat": []}
+        return {"Process": process, "GrammaticalFeatures": gram }
+                # "TransformCategory": [], "feat": []}
 
     def __str__(self):
         ms = []
@@ -313,7 +350,7 @@ class Form:
             return "%s::%s" % ("+".join(self.form), ",,".join(ms))
 
 
-def load_p_file(file):
+def load_p_file(file, pos='', lex=''):
     paradigms = []
     line_no = 1
     with codecs.open(file,encoding='utf-8') as f:
@@ -344,15 +381,25 @@ def load_p_file(file):
             print('Error on line', line_no)
             raise
     paradigms.sort(reverse=True)
-    return [Paradigm(wfs,p_members, 'p%d_%s' % (i, p_members[0][0][1])) for (i,(_,wfs,p_members)) in enumerate(paradigms,1)]
+    return [Paradigm(wfs,p_members, 'p%d_%s' % (i, p_members[0][0][1]), pos=pos, lex=lex) for (i,(_,wfs,p_members)) in enumerate(paradigms,1)]
 
 
 def load_json_file(file):
-    paradigms = []
-    #with codecs.open(file,encoding='utf-8') as f:
     obj_no = 1
     try:
-        for paradigm in json.load(codecs.open(file,encoding='utf-8')):
+        return load_json(json.load(codecs.open(file,encoding='utf-8')))
+    except Exception as e:
+        print('Error on object %d:\n %s' % (obj_no, e))
+        raise
+
+
+def load_json(objs):
+    paradigms = []
+    obj_no = 1
+    print('load', objs,'\n\n',)
+    try:
+        for paradigm in objs:
+          print('p', paradigm.keys())
           var_insts = [list(inst.items()) for inst in paradigm.get('VariableInstances', [])]
           p_id = paradigm.get('MorphologicalPatternID', '')
           form_msd = []
@@ -364,7 +411,7 @@ def load_json_file(file):
                       f.append(p['variableNum'])
                   if p.get('processType', '') == "pextractAddConstant":
                       f.append(p['stringValue'])
-              msd = transform.get('GrammaticalFeatures').items()
+              msd = list(transform.get('GrammaticalFeatures').items())
               form_msd.append(('+'.join(f), msd))
           paradigms.append((form_msd, var_insts, p_id))
           obj_no += 1
@@ -372,6 +419,7 @@ def load_json_file(file):
         print('Error on object %d:\n %s' % (obj_no, e))
         raise
     paradigms.sort(reverse=True)
+    print('paradigm', paradigms)
     return [Paradigm(wfs, p_members, p_id) for (wfs, p_members, _id) in paradigms]
 
 
