@@ -23,13 +23,16 @@
 # coges	person=2nd,number=singular,tense=present,mood=indicative
 # coge	person=3rd,number=singular,tense=present,mood=indicative
 # ...
-
+import getopt
 import functools
-import sys, math, paradigm, codecs, getopt
+import math
+import paradigm
+import sys
+
 
 class stringngram:
 
-    def __init__(self, stringset, alphabet = None, order = 2, ngramprior = 0.01):
+    def __init__(self, stringset, alphabet=None, order=2, ngramprior=0.01):
         """Read a set of strings and create an n-gram model."""
         self.stringset = [u'#'*(order-1) + s + u'#' for s in stringset]
         self.alphabet = {char for s in self.stringset for char in s}
@@ -63,9 +66,9 @@ def paradigms_to_alphabet(paradigms):
     """Extracts all used symbols from an iterable of paradigms."""
     alphabet = set()
     for paradigm in paradigms:
-          for idx, (is_var, slot) in enumerate(paradigm.slots):
-                for word in slot:
-                    alphabet |= set(word)
+        for idx, (is_var, slot) in enumerate(paradigm.slots):
+            for word in slot:
+                alphabet |= set(word)
     return alphabet - {'_'}
 
 
@@ -84,20 +87,21 @@ def eval_vars(matches, lm):
 def eval_multiple_entries(p, words, tags=[]):
     """Returns a set of consistent variable assigment to all words."""
     wmatches = []
-    #print('eval',words,tags)
     for ix, w in enumerate(words):
         tag = tags[ix] if len(tags) > ix else ''
         wmatch = set()
-        #print('test', w, tag)
-        msd = [tuple(x.split('=')) for x in tag.split(',,') if tag]
-        for m in filter(lambda x: x != None, p.match(w, constrained = False, tag=msd)):
-            if m == []:
-                m = [(0,())] # Add dummy to show match is exact without vars
-            for submatch in m:
-                if len(submatch) > 0:
-                    wmatch.add(submatch[1])
-        wmatches.append(wmatch)
-    consistentvars = functools.reduce(lambda x,y: x & y, wmatches)
+        # TODO this parsing should already be done
+        # msd = [tuple(x.split('=')) for x in tag.split(',,') if tag]
+        print('tag', tag)
+        if not tag or tag[0][1] != 'identifier':
+            for m in filter(lambda x: x is not None, p.match(w, constrained=False, tag=tag)):
+                if m == []:
+                    m = [(0, ())]  # Add dummy to show match is exact without vars
+                for submatch in m:
+                    if len(submatch) > 0:
+                        wmatch.add(submatch[1])
+            wmatches.append(wmatch)
+    consistentvars = functools.reduce(lambda x, y: x & y, wmatches)
     return consistentvars
 
 
@@ -151,13 +155,13 @@ def main(argv):
         print
 
 
-def build(inpfile, ngramorder, ngramprior, small=False, lexicon='', inpformat='pfile'):
+def build(inpfile, ngramorder, ngramprior, small=False, lexicon='', inpformat='pfile', pos=''):
     if inpformat == 'pfile':
         paradigms = paradigm.load_p_file(inpfile, lex=lexicon) # [(occurrence_count, name, paradigm),...,]
     elif inpformat == 'jsonfile':
-        paradigms = paradigm.load_json_file(inpfile)
+        paradigms = paradigm.load_json_file(inpfile, lex=lexicon, pos=pos)
     elif inpformat == 'json':
-        paradigms = paradigm.load_json(inpfile)
+        paradigms = paradigm.load_json(inpfile, lex=lexicon, pos=pos)
     alphabet = paradigms_to_alphabet(paradigms)
 
     numexamples = sum(map(lambda x: x.count, paradigms))
@@ -178,7 +182,8 @@ def build(inpfile, ngramorder, ngramprior, small=False, lexicon='', inpformat='p
     return paradigms, numexamples, lms
 
 
-def test_paradigms(inp, paradigms, numexamples, lms, print_tables, debug, pprior, choose=False, returnempty=True):
+def test_paradigms(inp, paradigms, numexamples, lms, print_tables, debug,
+                   pprior, choose=False, returnempty=True, match_all=False):
     res = []
     for line in inp:
         tags = []
@@ -188,7 +193,7 @@ def test_paradigms(inp, paradigms, numexamples, lms, print_tables, debug, pprior
         elif type(line) == tuple:
             words, tags = line
         else:
-            words = line #line.strip().split()
+            words = line  # line.strip().split()
 
         if len(words) == 0:
             continue
@@ -214,36 +219,23 @@ def test_paradigms(inp, paradigms, numexamples, lms, print_tables, debug, pprior
         for pindex, p in fittingparadigms:
             # TODO lm_score is not an int, set to 0 or []?
             lm_score = 0 if len(lms) <= pindex else lms[pindex]
-            analyses.append(test_paradigm(p, words, numexamples, lm_score))
-            # print(p.name)
-            # print("p.count",p.count)
-            # prior = math.log(p.count/float(numexamples))
-            # vars = eval_multiple_entries(p, words) # All possible instantiations
-            # if len(vars) == 0:
-            #     # Word matches
-            #     score = prior
-            #     analyses.append((score, p, ()))
-            # else:
-            #     for v in vars:
-            #         # TODO lm_score is not an int, set to 0 or []?
-            #         lm_score = 0 if len(lms) <= pindex else lms[pindex]
-            #         score = prior * pprior + len(words) * eval_vars(v, lm_score)
-            #         #print('score = %s * %s + %s * %s([%s %s]) = %s' % (prior, pprior, len(words), eval_vars(v, lm_score), v, lms[pindex], score))
-            #         #score = len(words) * eval_vars(v, lms[pindex])
-            #         analyses.append((score, p, v))
+            match_table = list(zip(words, tags)) if match_all else []
+            analyses.extend(test_paradigm(p, words, numexamples, pprior,
+                                          lm_score, match_table=match_table))
 
-        analyses.sort(reverse = True, key = lambda x: x[0])
+        analyses.sort(reverse=True, key=lambda x: x[0])
         if analyses or returnempty:
             res.append((words, analyses))
     return res
 
 
-def test_paradigm(p, words, numexamples, lm_score):
+def test_paradigm(p, words, numexamples, pprior, lm_score, match_table=[]):
     res = []
     print(p.name)
-    print("p.count",p.count)
+    print("p.count", p.count)
+    print('words', words)
     prior = math.log(p.count/float(numexamples))
-    vars = eval_multiple_entries(p, words) # All possible instantiations
+    vars = eval_multiple_entries(p, words)  # All possible instantiations
     if len(vars) == 0:
         # Word matches
         score = prior
@@ -252,6 +244,18 @@ def test_paradigm(p, words, numexamples, lm_score):
         for v in vars:
             score = prior * pprior + len(words) * eval_vars(v, lm_score)
             res.append((score, p, v))
+
+    def match(p, v, table):
+        try:
+            print('table?', p(*v))
+            return p(*v) == table
+        except:
+            return False
+
+    if match_table:
+        print('Compare tables')
+        print('Goal %s' % match_table)
+        res = [(s, p, v) for (s, p, v) in res if match(p, v, match_table)]
     return res
 
 

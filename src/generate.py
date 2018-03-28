@@ -2,11 +2,11 @@ from morphparser import test_paradigm
 
 
 def run_paradigms(fittingparadigms, words, kbest=1, vbest=3, pprior=0, lms=[],
-                  numexamples=1, debug=True):
+                  numexamples=1, debug=False):
     if debug:
         print("Plausible paradigms:")
-        for pnum, p in fittingparadigms:
-            print(pnum, p.name)
+        for p in fittingparadigms:
+            print(p.name)
     res = []
     # Quick filter out most paradigms
     for p in fittingparadigms[:kbest]:
@@ -14,7 +14,7 @@ def run_paradigms(fittingparadigms, words, kbest=1, vbest=3, pprior=0, lms=[],
         print('paradigm', p.name)
         # TODO lms is broken!
         lm_score = 0
-        analyses.append(test_paradigm(p, words, numexamples, lm_score))
+        analyses.extend(test_paradigm(p, words, numexamples, pprior, lm_score))
 
         res.append((p.name, words, analyses))
 
