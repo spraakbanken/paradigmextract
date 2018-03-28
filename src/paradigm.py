@@ -27,18 +27,18 @@ class Paradigm:
             Ex: [[('1','dimm')],[('1','dank')], ...]
     """
 
-    def __init__(self, form_msds, var_insts, p_id='', small=False, pos='', lex=''):
+    def __init__(self, form_msds, var_insts, p_id='', small=False, pos='', lex='', uuid=''):
     #def __init__(self, paradigm):
     # prefix: just for naming, exclude since we have p_id?
     #def __init__(self, form_msds, var_insts, prefix=None, p_id=None):
-      print('make paradigm', form_msds, var_insts, p_id)
+      print('make paradigm', p_id, uuid)
       self.p_info = {}
       self.small = small
       self.classes = {}
       self.forms = []
       self.pos = pos
       self.lex = lex
-      self.uuid = ''
+      self.uuid = uuid
       if  small:
           self.var_insts = []
       else:
@@ -90,7 +90,6 @@ class Paradigm:
                 if not self.p_id:
                     self.p_info['name'] = self.__call__()[0][0]
                 self.p_info['count'] = 1
-            # TODO why recompute this?
             self.p_info['slots'] = self.__slots()
         return self.p_info[attr]
 
@@ -385,23 +384,21 @@ def load_p_file(file, pos='', lex=''):
 
 
 def load_json_file(file):
-    obj_no = 1
     try:
         return load_json(json.load(codecs.open(file,encoding='utf-8')))
     except Exception as e:
-        print('Error on object %d:\n %s' % (obj_no, e))
+        print('Could not read json file %s' % (e))
         raise
 
 
 def load_json(objs):
     paradigms = []
     obj_no = 1
-    print('load', objs,'\n\n',)
     try:
         for paradigm in objs:
-          print('p', paradigm.keys())
           var_insts = [list(inst.items()) for inst in paradigm.get('VariableInstances', [])]
           p_id = paradigm.get('MorphologicalPatternID', '')
+          uuid = paradigm.get('_uuid', '')
           form_msd = []
           for transform in paradigm.get("TransformSet", []):
               f = []
@@ -413,14 +410,13 @@ def load_json(objs):
                       f.append(p['stringValue'])
               msd = list(transform.get('GrammaticalFeatures').items())
               form_msd.append(('+'.join(f), msd))
-          paradigms.append((form_msd, var_insts, p_id))
+          paradigms.append((form_msd, var_insts, p_id, uuid))
           obj_no += 1
     except Exception as e:
         print('Error on object %d:\n %s' % (obj_no, e))
         raise
     paradigms.sort(reverse=True)
-    print('paradigm', paradigms)
-    return [Paradigm(wfs, p_members, p_id) for (wfs, p_members, _id) in paradigms]
+    return [Paradigm(wfs, p_members, p_id, uuid=uuid) for (wfs, p_members, p_id, uuid) in paradigms]
 
 
 def pr(i,b):

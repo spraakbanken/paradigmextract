@@ -70,20 +70,25 @@ def paradigms_to_alphabet(paradigms):
 
 
 def eval_vars(matches, lm):
-    if lm:
+    # TODO fix
+    try:
         return sum(lm[1][midx].evaluate(m) for midx, m in enumerate(matches))
-    else:
+    except:
         return 1
+    # if lm:
+    #     return sum(lm[1][midx].evaluate(m) for midx, m in enumerate(matches))
+    # else:
+    #     return 1
 
 
 def eval_multiple_entries(p, words, tags=[]):
     """Returns a set of consistent variable assigment to all words."""
     wmatches = []
-    print('eval',words,tags)
+    #print('eval',words,tags)
     for ix, w in enumerate(words):
         tag = tags[ix] if len(tags) > ix else ''
         wmatch = set()
-        print('test', w, tag)
+        #print('test', w, tag)
         msd = [tuple(x.split('=')) for x in tag.split(',,') if tag]
         for m in filter(lambda x: x != None, p.match(w, constrained = False, tag=msd)):
             if m == []:
@@ -207,26 +212,46 @@ def test_paradigms(inp, paradigms, numexamples, lms, print_tables, debug, pprior
         analyses = []
         # Calculate score for each possible variable assignment
         for pindex, p in fittingparadigms:
-            print(p.name)
-            print("p.count",p.count)
-            prior = math.log(p.count/float(numexamples))
-            vars = eval_multiple_entries(p, words) # All possible instantiations
-            if len(vars) == 0:
-                # Word matches
-                score = prior
-                analyses.append((score, p, ()))
-            else:
-                for v in vars:
-                    # TODO lm_score is not an int, set to 0 or []?
-                    lm_score = 0 if len(lms) <= pindex else lms[pindex]
-                    score = prior * pprior + len(words) * eval_vars(v, lm_score)
-                    #print('score = %s * %s + %s * %s([%s %s]) = %s' % (prior, pprior, len(words), eval_vars(v, lm_score), v, lms[pindex], score))
-                    #score = len(words) * eval_vars(v, lms[pindex])
-                    analyses.append((score, p, v))
+            # TODO lm_score is not an int, set to 0 or []?
+            lm_score = 0 if len(lms) <= pindex else lms[pindex]
+            analyses.append(test_paradigm(p, words, numexamples, lm_score))
+            # print(p.name)
+            # print("p.count",p.count)
+            # prior = math.log(p.count/float(numexamples))
+            # vars = eval_multiple_entries(p, words) # All possible instantiations
+            # if len(vars) == 0:
+            #     # Word matches
+            #     score = prior
+            #     analyses.append((score, p, ()))
+            # else:
+            #     for v in vars:
+            #         # TODO lm_score is not an int, set to 0 or []?
+            #         lm_score = 0 if len(lms) <= pindex else lms[pindex]
+            #         score = prior * pprior + len(words) * eval_vars(v, lm_score)
+            #         #print('score = %s * %s + %s * %s([%s %s]) = %s' % (prior, pprior, len(words), eval_vars(v, lm_score), v, lms[pindex], score))
+            #         #score = len(words) * eval_vars(v, lms[pindex])
+            #         analyses.append((score, p, v))
 
         analyses.sort(reverse = True, key = lambda x: x[0])
         if analyses or returnempty:
             res.append((words, analyses))
+    return res
+
+
+def test_paradigm(p, words, numexamples, lm_score):
+    res = []
+    print(p.name)
+    print("p.count",p.count)
+    prior = math.log(p.count/float(numexamples))
+    vars = eval_multiple_entries(p, words) # All possible instantiations
+    if len(vars) == 0:
+        # Word matches
+        score = prior
+        res.append((score, p, ()))
+    else:
+        for v in vars:
+            score = prior * pprior + len(words) * eval_vars(v, lm_score)
+            res.append((score, p, v))
     return res
 
 
