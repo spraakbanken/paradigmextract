@@ -394,13 +394,13 @@ def learnparadigms(inflectiontables):
                 variabletable = [string_to_varstring(s, variablelist) for s in c]
                 combos.append([table,c,variabletable,variablelist,numvars,infixcount])
 
-        vartables.append((tablehead, taghead, combos,tagtable))
+        vartables.append((tablehead, taghead, combos, tagtable))
 
     filteredtables = []
 
     for idform, idtag, t, tags in vartables:
         besttable = min(t, key = lambda s: (s[4],s[5]))
-        filteredtables.append((idform, idtag, besttable,tags))
+        filteredtables.append((idform, idtag, besttable, tags))
 
     paradigmlist = collapse_tables(filteredtables)
 
@@ -410,14 +410,15 @@ def learnparadigms(inflectiontables):
 
 if __name__ == '__main__':
 
-    lines = [l.decode('utf-8').strip() for l in sys.stdin]
+    lines = [l.strip() for l in sys.stdin]
     tables = []
     thistable = []
     thesetags = []
     for l in lines:
         if l == u'':
             if len(thistable) > 0:
-                tables.append((thistable, thesetags))
+                splittags = split_tags(thesetags)
+                tables.append((thistable, splittags))
                 thistable = []
                 thesetags = []
         else:
@@ -430,7 +431,8 @@ if __name__ == '__main__':
             thesetags.append(tag)
 
     if len(thistable) > 0:
-        tables.append((thistable, thesetags))
+        splittags = split_tags(thesetags)
+        tables.append((thistable, splittags))
 
     learnedparadigms = learnparadigms(tables)
     for p in learnedparadigms:
