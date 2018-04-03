@@ -1,0 +1,39 @@
+flicka..nn.1	msd=identifier
+flicka	msd=sg indef nom
+flickas	msd=sg indef gen
+flickan	msd=sg def nom
+flickans	msd=sg def gen
+flickor	msd=pl indef nom
+flickors	msd=pl indef gen
+flickorna	msd=pl def nom
+flickornas	msd=pl def gen
+
+olja..nn.1	msd=identifier
+olja	msd=sg indef nom
+oljas	msd=sg indef gen
+oljan	msd=sg def nom
+oljans	msd=sg def gen
+oljor	msd=pl indef nom
+oljors	msd=pl indef gen
+oljorna	msd=pl def nom
+oljornas	msd=pl def gen
+
+katt..nn.1	msd=identifier
+katt	msd=sg indef nom
+katts	msd=sg indef gen
+katten	msd=sg def nom
+kattens	msd=sg def gen
+katter	msd=pl indef nom
+katters	msd=pl indef gen
+katterna	msd=pl def nom
+katternas	msd=pl def gen
+
+bok..nn.1	msd=identifier
+bok	msd=sg indef nom
+boks	msd=sg indef gen
+boken	msd=sg def nom
+bokens	msd=sg def gen
+böcker	msd=pl indef nom
+böckers	msd=pl indef gen
+böckerna	msd=pl def nom
+böckernas	msd=pl def gen
