@@ -327,7 +327,9 @@ def collapse_tables(tables):
                 varstring.append(vars_to_string(tab2[0], t2[3]))
                 collapsedidx.update({idx2})
         varstring.append(vars_to_string(tab[0], t[3]))
-        splittags = split_tags(tags)
+        # splittags = split_tags(tags)
+        # TODO is tags ever not splitted here?
+        splittags = tags
         formlist = zip(t[2], splittags)
         try:
             p = paradigm.Paradigm(formlist, varstring)

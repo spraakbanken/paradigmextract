@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 
-import json
-import re
-import sys
 import codecs
 from collections import defaultdict
-import regexmatcher
 import genregex
+import json
+import logging
+import re
+import regexmatcher
+import sys
 
 
 def overlap(ss):
@@ -34,7 +35,7 @@ class Paradigm:
         # def __init__(self, paradigm):
         # prefix: just for naming, exclude since we have p_id?
         # def __init__(self, form_msds, var_insts, prefix=None, p_id=None):
-        print('make paradigm', p_id, uuid, lex)
+        logging.debug('make paradigm %s %s in lexicon %s' % (p_id, uuid, lex))
         self.p_info = {}
         self.small = small
         self.classes = {}
@@ -71,9 +72,9 @@ class Paradigm:
     def add_class(self, name, members):
         if name not in self.classes:
             self.classes[name] = set()
-        print('add class', name, members)
+        # print('add class', name, members)
         self.classes[name].update(members)
-        print('added class', self.classes)
+        # print('added class', self.classes)
 
     def __getattr__(self, attr):
         # TODO maybe recompute at times?
@@ -136,7 +137,7 @@ class Paradigm:
             forms = [f for f in self.forms if not f.identifier]
         else:
             forms = [self.forms[i] for i in selection]
-        print('match', w, tag, [f.msd for f in forms])
+        # print('match', w, tag, [f.msd for f in forms])
         if tag:
             forms = [f for f in forms if f.msd == tag]
         for f in forms:
@@ -228,7 +229,7 @@ class Form:
             try:
                 self.v_regex.append(re.compile(genregex.genregex(ss, pvalue=0.05).pyregex()))
             except:
-                print('error', ss)
+                logging.error('error reading %s!' % ss)
                 raise
 
     def shapes(self, ss):
@@ -385,7 +386,7 @@ def load_p_file(file, pos='', lex=''):
                 paradigms.append((len(p_members), wfs, p_members))
                 line_no += 1
         except:
-            print('Error on line', line_no)
+            logging.error('Error on line %s' % line_no)
             raise
     paradigms.sort(reverse=True)
     return [Paradigm(wfs,p_members, 'p%d_%s' % (i, p_members[0][0][1]), pos=pos, lex=lex) for (i,(_,wfs,p_members)) in enumerate(paradigms,1)]
@@ -395,7 +396,7 @@ def load_json_file(file, lex='', pos=''):
     try:
         return load_json(json.load(codecs.open(file,encoding='utf-8')), lex=lex, pos=pos)
     except Exception as e:
-        print('Could not read json file %s' % (e))
+        logging.error('Could not read json file %s' % (e))
         raise
 
 
@@ -421,7 +422,7 @@ def load_json(objs, lex='', pos=''):
             paradigms.append((form_msd, var_insts, p_id, uuid))
             obj_no += 1
     except Exception as e:
-        print('Error on object %d:\n %s' % (obj_no, e))
+        logging.error('Error on object %d:\n %s' % (obj_no, e))
         raise
     paradigms.sort(reverse=True)
     return [Paradigm(wfs, p_members, p_id, uuid=uuid, lex=lex, pos=pos) for (wfs, p_members, p_id, uuid) in paradigms]

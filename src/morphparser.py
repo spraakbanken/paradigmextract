@@ -92,7 +92,7 @@ def eval_multiple_entries(p, words, tags=[]):
         wmatch = set()
         # TODO this parsing should already be done
         # msd = [tuple(x.split('=')) for x in tag.split(',,') if tag]
-        print('tag', tag)
+        # print('tag', tag)
         if not tag or tag[0][1] != 'identifier':
             for m in filter(lambda x: x is not None, p.match(w, constrained=False, tag=tag)):
                 if m == []:
@@ -199,7 +199,7 @@ def test_paradigms(inp, paradigms, numexamples, lms, print_tables, debug,
             continue
 
         if choose:
-            print('choose', lemgram)
+            # print('choose', lemgram)
             fittingparadigms = [(pindex, p) for pindex, p in enumerate(paradigms) if lemgram in p.members]
             #fittingparadigms = [(pindex, p) for pindex, p in enumerate(paradigms) if p.name==inppara]
         else:
@@ -210,7 +210,7 @@ def test_paradigms(inp, paradigms, numexamples, lms, print_tables, debug,
 
         if debug:
         # Quick filter out most paradigms
-            print("Plausible paradigms:")
+            # print("Plausible paradigms:")
             for pnum, p in fittingparadigms:
                 print(pnum, p.name)
 
