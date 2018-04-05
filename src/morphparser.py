@@ -166,16 +166,16 @@ def build(inpfile, ngramorder, ngramprior, small=False, lexicon='', inpformat='p
 
     numexamples = sum(map(lambda x: x.count, paradigms))
 
-    lms = []
+    lms = {}
     # Learn n-gram LM for each variable
-    for pindex, p in enumerate(paradigms):
+    for p in paradigms:
         numvars = (len(p.slots) - 1)/2
         slotmodels  = []
         for v in range(0, int(numvars)):
             varinsts = p.slots[v*2+1][1]
             model = stringngram(varinsts, alphabet = alphabet, order = ngramorder, ngramprior = ngramprior)
             slotmodels.append(model)
-        lms.append((numvars, slotmodels))
+        lms[p.uuid] = (numvars, slotmodels)
         if small:
             print('shrink')
             p.shrink()
@@ -200,7 +200,7 @@ def test_paradigms(inp, paradigms, numexamples, lms, print_tables, debug,
 
         if choose:
             # print('choose', lemgram)
-            fittingparadigms = [(pindex, p) for pindex, p in enumerate(paradigms) if lemgram in p.members]
+            fittingparadigms = [p for p in paradigms if lemgram in p.members]
             #fittingparadigms = [(pindex, p) for pindex, p in enumerate(paradigms) if p.name==inppara]
         else:
             # Quick filter out most paradigms
@@ -211,14 +211,14 @@ def test_paradigms(inp, paradigms, numexamples, lms, print_tables, debug,
         if debug:
         # Quick filter out most paradigms
             # print("Plausible paradigms:")
-            for pnum, p in fittingparadigms:
-                print(pnum, p.name)
+            for p in fittingparadigms:
+                print(p.name)
 
         analyses = []
         # Calculate score for each possible variable assignment
         for pindex, p in fittingparadigms:
             # TODO lm_score is not an int, set to 0 or []?
-            lm_score = 0 if len(lms) <= pindex else lms[pindex]
+            lm_score = lms[p.uuid]
             match_table = list(zip(words, tags)) if match_all else []
             analyses.extend(test_paradigm(p, words, numexamples, pprior,
                                           lm_score, match_table=match_table))
@@ -231,9 +231,9 @@ def test_paradigms(inp, paradigms, numexamples, lms, print_tables, debug,
 
 def test_paradigm(p, words, numexamples, pprior, lm_score, match_table=[]):
     res = []
-    print(p.name)
-    print("p.count", p.count)
-    print('words', words)
+    # print(p.name)
+    # print("p.count", p.count)
+    # print('words', words)
     prior = math.log(p.count/float(numexamples))
     vars = eval_multiple_entries(p, words)  # All possible instantiations
     if len(vars) == 0:
@@ -247,7 +247,7 @@ def test_paradigm(p, words, numexamples, pprior, lm_score, match_table=[]):
 
     def match(p, v, table):
         try:
-            print('table?', p(*v))
+            # print('table?', p(*v))
             return p(*v) == table
         except:
             return False

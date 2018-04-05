@@ -1,7 +1,7 @@
 from morphparser import test_paradigm
 
 
-def run_paradigms(fittingparadigms, words, kbest=1, vbest=3, pprior=0, lms=[],
+def run_paradigms(fittingparadigms, words, kbest=1, vbest=3, pprior=0, lms={},
                   numexamples=1, debug=False):
     if debug:
         print("Plausible paradigms:")
@@ -12,8 +12,7 @@ def run_paradigms(fittingparadigms, words, kbest=1, vbest=3, pprior=0, lms=[],
     for p in fittingparadigms[:kbest]:
         analyses = []
         print('paradigm', p.name)
-        # TODO lms is broken!
-        lm_score = 0
+        lm_score = lms[p.uuid]
         analyses.extend(test_paradigm(p, words, numexamples, pprior, lm_score))
 
         res.append((p.name, words, analyses))
