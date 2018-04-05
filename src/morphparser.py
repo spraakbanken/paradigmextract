@@ -87,20 +87,24 @@ def eval_vars(matches, lm):
 def eval_multiple_entries(p, words, tags=[]):
     """Returns a set of consistent variable assigment to all words."""
     wmatches = []
+    print('match', words, 'tags', tags)
     for ix, w in enumerate(words):
         tag = tags[ix] if len(tags) > ix else ''
         wmatch = set()
         # TODO this parsing should already be done
         # msd = [tuple(x.split('=')) for x in tag.split(',,') if tag]
+        # print('ix', ix)
+        # print('word', w)
         # print('tag', tag)
-        if not tag or tag[0][1] != 'identifier':
-            for m in filter(lambda x: x is not None, p.match(w, constrained=False, tag=tag)):
-                if m == []:
-                    m = [(0, ())]  # Add dummy to show match is exact without vars
-                for submatch in m:
-                    if len(submatch) > 0:
-                        wmatch.add(submatch[1])
-            wmatches.append(wmatch)
+        # TODO when to exclude tag???
+        #if not tag or tag[0][1] != 'identifier':
+        for m in filter(lambda x: x is not None, p.match(w, constrained=False, tag=tag)):
+            if m == []:
+                m = [(0, ())]  # Add dummy to show match is exact without vars
+            for submatch in m:
+                if len(submatch) > 0:
+                    wmatch.add(submatch[1])
+        wmatches.append(wmatch)
     consistentvars = functools.reduce(lambda x, y: x & y, wmatches)
     return consistentvars
 
@@ -129,7 +133,9 @@ def main(argv):
             choose = True
     inp = iter(lambda: sys.stdin.readline().decode('utf-8'), '')
     paras, numexamples, lms = build(sys.argv[1], ngramorder, ngramprior)
-    res = test_paradigms(inp, paras, numexamples, lms, print_tables, debug, pprior, choose)
+    res = []
+    for line in inp:
+       res.append(test_paradigms(line, paras, numexamples, lms, print_tables, debug, pprior, choose))
 
     for words, analyses in res:
         # Print all analyses + optionally a table
@@ -185,58 +191,72 @@ def build(inpfile, ngramorder, ngramprior, small=False, lexicon='', inpformat='p
 def test_paradigms(inp, paradigms, numexamples, lms, print_tables, debug,
                    pprior, choose=False, returnempty=True, match_all=False):
     res = []
-    for line in inp:
-        tags = []
-        if choose:
-            word, lemgram = line.strip().split()
-            words = [word]
-        elif type(line) == tuple:
-            words, tags = line
-        else:
-            words = line  # line.strip().split()
+    tags = []
+    if choose:
+        word, lemgram = inp.strip().split()
+        words = [word]
+    elif type(inp) == tuple:
+        words, tags = inp
+    else:
+        words = inp  # line.strip().split()
 
-        if len(words) == 0:
-            continue
+    print('input', words, 'tags', tags)
+    if len(words) == 0:
+        return res
 
-        if choose:
-            # print('choose', lemgram)
-            fittingparadigms = [p for p in paradigms if lemgram in p.members]
-            #fittingparadigms = [(pindex, p) for pindex, p in enumerate(paradigms) if p.name==inppara]
-        else:
-            # Quick filter out most paradigms
-            fittingparadigms = [(pindex, p) for pindex, p in enumerate(paradigms) if all(p.fits_paradigm(w, constrained = False) for w in words)]
-
-        fittingparadigms = filter(lambda p: eval_multiple_entries(p[1], words, tags), fittingparadigms)
-
-        if debug:
+    if choose:
+        # print('choose', lemgram)
+        fittingparadigms = [p for p in paradigms if lemgram in p.members]
+        #fittingparadigms = [(pindex, p) for pindex, p in enumerate(paradigms) if p.name==inppara]
+    else:
         # Quick filter out most paradigms
-            # print("Plausible paradigms:")
-            for p in fittingparadigms:
-                print(p.name)
+        if tags:
+            table = list(zip(words, tags))
+            fittingparadigms = [p for p in paradigms\
+                                if all(p.fits_paradigm(w, constrained=False, tag=t) for w,t in table)]
+            # for p in paradigms:
+            #    ok = all(p.fits_paradigm(w, constrained=False, tag=t) for w,t in table)
+            #    print('p',p, 'ok?',ok)
+        else:
+            fittingparadigms = [p for p in paradigms if all(p.fits_paradigm(w, constrained=False) for w in words)]
+        print('fitting', len(fittingparadigms))
 
-        analyses = []
-        # Calculate score for each possible variable assignment
-        for pindex, p in fittingparadigms:
-            # TODO lm_score is not an int, set to 0 or []?
-            lm_score = lms[p.uuid]
-            match_table = list(zip(words, tags)) if match_all else []
-            analyses.extend(test_paradigm(p, words, numexamples, pprior,
-                                          lm_score, match_table=match_table))
+    # print('fitting', len(fittingparadigms))
+    # print('test', words, 'tags', tags)
+    fittingparadigms = list(filter(lambda p: eval_multiple_entries(p, words, tags), fittingparadigms))
+    # print('tested', words, 'tags', tags)
+    # print('fitting', len(fittingparadigms))
+    if debug:
+    # Quick filter out most paradigms
+        # print("Plausible paradigms:")
+        for p in fittingparadigms:
+            print(p.name)
 
-        analyses.sort(reverse=True, key=lambda x: x[0])
-        if analyses or returnempty:
-            res.append((words, analyses))
+    analyses = []
+    # Calculate score for each possible variable assignment
+    for p in fittingparadigms:
+        lm_score = lms[p.uuid]
+        match_table = list(zip(words, tags)) if match_all else []
+        analyses.extend(test_paradigm(p, words, numexamples, pprior,
+                                      lm_score, tags=tags,
+                                      match_table=match_table))
+
+    analyses.sort(reverse=True, key=lambda x: x[0])
+    if analyses or returnempty:
+        res.append((words, analyses))
     return res
 
 
-def test_paradigm(p, words, numexamples, pprior, lm_score, match_table=[]):
+def test_paradigm(p, words, numexamples, pprior, lm_score, tags=[], match_table=[]):
     res = []
     # print(p.name)
     # print("p.count", p.count)
     # print('words', words)
     prior = math.log(p.count/float(numexamples))
-    vars = eval_multiple_entries(p, words)  # All possible instantiations
+    vars = eval_multiple_entries(p, words, tags)  # All possible instantiations
     if len(vars) == 0:
+        # TODO this probably never happens, since p list is already filtered on
+        # eval_multiple_entries
         # Word matches
         score = prior
         res.append((score, p, ()))
