@@ -84,10 +84,10 @@ def eval_vars(matches, lm):
     #     return 1
 
 
-def eval_multiple_entries(p, words, tags=[]):
+def eval_multiple_entries(p, words, tags=[], baseform=False):
     """Returns a set of consistent variable assigment to all words."""
     wmatches = []
-    print('match', words, 'tags', tags)
+    # print('match', words, 'tags', tags)
     for ix, w in enumerate(words):
         tag = tags[ix] if len(tags) > ix else ''
         wmatch = set()
@@ -98,7 +98,9 @@ def eval_multiple_entries(p, words, tags=[]):
         # print('tag', tag)
         # TODO when to exclude tag???
         #if not tag or tag[0][1] != 'identifier':
-        for m in filter(lambda x: x is not None, p.match(w, constrained=False, tag=tag)):
+        restrict = ix == 0 and baseform
+        #print('restrict',ix,w,baseform)
+        for m in filter(lambda x: x is not None, p.match(w, constrained=False, tag=tag, baseform=restrict)):
             if m == []:
                 m = [(0, ())]  # Add dummy to show match is exact without vars
             for submatch in m:
@@ -189,8 +191,8 @@ def build(inpfile, ngramorder, ngramprior, small=False, lexicon='', inpformat='p
 
 
 def test_paradigms(inp, paradigms, numexamples, lms, print_tables, debug,
-                   pprior, choose=False, returnempty=True, match_all=False):
-    res = []
+                   pprior, choose=False, returnempty=True, match_all=False,
+                   baseform=False):
     tags = []
     if choose:
         word, lemgram = inp.strip().split()
@@ -202,7 +204,7 @@ def test_paradigms(inp, paradigms, numexamples, lms, print_tables, debug,
 
     print('input', words, 'tags', tags)
     if len(words) == 0:
-        return res
+        return []
 
     if choose:
         # print('choose', lemgram)
@@ -223,7 +225,8 @@ def test_paradigms(inp, paradigms, numexamples, lms, print_tables, debug,
 
     # print('fitting', len(fittingparadigms))
     # print('test', words, 'tags', tags)
-    fittingparadigms = list(filter(lambda p: eval_multiple_entries(p, words, tags), fittingparadigms))
+    fittingparadigms = list(filter(lambda p: eval_multiple_entries(p, words, tags, baseform=baseform), fittingparadigms))
+    print('now fitting', len(fittingparadigms))
     # print('tested', words, 'tags', tags)
     # print('fitting', len(fittingparadigms))
     if debug:
@@ -239,21 +242,40 @@ def test_paradigms(inp, paradigms, numexamples, lms, print_tables, debug,
         match_table = list(zip(words, tags)) if match_all else []
         analyses.extend(test_paradigm(p, words, numexamples, pprior,
                                       lm_score, tags=tags,
-                                      match_table=match_table))
+                                      match_table=match_table,
+                                      baseform=baseform))
 
     analyses.sort(reverse=True, key=lambda x: x[0])
-    if analyses or returnempty:
-        res.append((words, analyses))
-    return res
+    # if analyses or returnempty:
+    #     res.append(analyses)
+    return analyses
 
 
-def test_paradigm(p, words, numexamples, pprior, lm_score, tags=[], match_table=[]):
+def run_paradigms(fittingparadigms, words, kbest=1, vbest=3, pprior=0, lms={},
+                  numexamples=1, debug=False, baseform=False):
+    if debug:
+        print("Plausible paradigms:")
+        for p in fittingparadigms:
+            print(p.name)
+    analyses = []
+    # Quick filter out most paradigms
+    for p in fittingparadigms[:kbest]:
+        print('paradigm', p.name)
+        lm_score = lms[p.uuid]
+        analyses.extend(test_paradigm(p, words, numexamples, pprior, lm_score,
+                                      baseform=baseform))
+
+    return analyses
+
+
+def test_paradigm(p, words, numexamples, pprior, lm_score, tags=[],
+                  match_table=[], baseform=False):
     res = []
     # print(p.name)
     # print("p.count", p.count)
     # print('words', words)
     prior = math.log(p.count/float(numexamples))
-    vars = eval_multiple_entries(p, words, tags)  # All possible instantiations
+    vars = eval_multiple_entries(p, words, tags, baseform=baseform)  # All possible instantiations
     if len(vars) == 0:
         # TODO this probably never happens, since p list is already filtered on
         # eval_multiple_entries

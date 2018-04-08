@@ -2,7 +2,7 @@ from morphparser import test_paradigm
 
 
 def run_paradigms(fittingparadigms, words, kbest=1, vbest=3, pprior=0, lms={},
-                  numexamples=1, debug=False):
+                  numexamples=1, debug=False, baseform=False):
     if debug:
         print("Plausible paradigms:")
         for p in fittingparadigms:
@@ -13,7 +13,8 @@ def run_paradigms(fittingparadigms, words, kbest=1, vbest=3, pprior=0, lms={},
         analyses = []
         print('paradigm', p.name)
         lm_score = lms[p.uuid]
-        analyses.extend(test_paradigm(p, words, numexamples, pprior, lm_score))
+        analyses.extend(test_paradigm(p, words, numexamples, pprior, lm_score,
+                                      baseform=baseform))
 
         res.append((p.name, words, analyses))
 

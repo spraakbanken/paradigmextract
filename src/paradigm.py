@@ -123,27 +123,30 @@ class Paradigm:
                 v_index += 1
         return slts
 
-    def fits_paradigm(self, w, tag='', constrained=True):
+    def fits_paradigm(self, w, tag='', constrained=True, baseform=False):
         # TODO will this make word fail if you provide all forms+identifier?
         for f in self.forms:
             if f.match(w, tag=tag, constrained=constrained) and not f.identifier:
                 return True
+            if baseform:
+                break
         return False
 
     # TODO test tag
-    def match(self, w, selection=None, constrained=True, tag=''):
+    def match(self, w, selection=None, constrained=True, tag='', baseform=False):
         result = []
-        if selection is None:
-            forms = [f for f in self.forms if not f.identifier]
-        else:
+        if selection is not None:
             forms = [self.forms[i] for i in selection]
-        # print('match', w, tag, [f.msd for f in forms])
-        #print('tag', tag)
+        elif baseform:
+            forms = self.forms[:1]
+        else:
+            forms = [f for f in self.forms if not f.identifier]
+        #print('match', w, tag, [f.msd for f in forms])
         if tag:
             forms = [f for f in forms if f.msd == tag]
             #print('forms left', forms)
         for f in forms:
-            #print('forms to evaluate', f.msd, f.msd)
+            #print('forms to evaluate', f.form, f.msd, 'to', w)
             xs = f.match_vars(w, constrained)
             result.append(xs)
         return result
