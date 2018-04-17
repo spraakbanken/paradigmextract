@@ -190,7 +190,7 @@ def string_to_varstring(string, vars):
 def lcp(lst):
     """Returns the longest common prefix from a list."""
     if not lst: return ''
-    cleanlst = map(lambda x: x.replace(u'[','').replace(u']','') , lst)
+    cleanlst = list(map(lambda x: x.replace(u'[','').replace(u']','') , lst))
     s1 = min(cleanlst)
     s2 = max(cleanlst)
     for i, c in enumerate(s1):
@@ -374,8 +374,13 @@ def learnparadigms(inflectiontables):
     vartables = []
     TABLELIMIT = 16
     for table, tagtable in inflectiontables:
-        tablehead, table = table[0], table[1:]
-        taghead, tagtable = tagtable[0], tagtable[1:]
+        tablehead = table[0]
+        taghead = tagtable[0]
+        # TODO find out if this is still needed. seems weird
+        # unless we're dealing with identifiers
+        if len(table) > 1:
+             table = table[1:]
+             tagtable = tagtable[1:]
         wg = [wordgraph.wordtograph(x) for x in table]
         result = functools.reduce(lambda x, y: x & y, wg)
         lcss = result.longestwords

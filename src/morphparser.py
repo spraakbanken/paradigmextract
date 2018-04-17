@@ -73,11 +73,10 @@ def paradigms_to_alphabet(paradigms):
 
 
 def eval_vars(matches, lm):
+    return sum(lm[1][midx].evaluate(m) for midx, m in enumerate(matches))
     # TODO fix
-    try:
-        return sum(lm[1][midx].evaluate(m) for midx, m in enumerate(matches))
-    except:
-        return 1
+    # except:
+    #     return 1
     # if lm:
     #     return sum(lm[1][midx].evaluate(m) for midx, m in enumerate(matches))
     # else:
@@ -98,8 +97,7 @@ def eval_multiple_entries(p, words, tags=[], baseform=False):
         # print('tag', tag)
         # TODO when to exclude tag???
         #if not tag or tag[0][1] != 'identifier':
-        restrict = ix == 0 and baseform
-        #print('restrict',ix,w,baseform)
+        restrict = not tag and ix == 0 and baseform
         for m in filter(lambda x: x is not None, p.match(w, constrained=False, tag=tag, baseform=restrict)):
             if m == []:
                 m = [(0, ())]  # Add dummy to show match is exact without vars
@@ -150,13 +148,13 @@ def main(argv):
             baseform = table[0][0]
             matchtable = [(form, msd) for form, msd in table if form in words]
             wordformlist = [form +':' + baseform + ',' + ','.join([m[0] + '=' + m[1] for m in msd]) for form, msd in matchtable]
-            print((unicode(score) + ' ' + p.name + ' ' + varstring + ' ' + '#'.join(wordformlist)).encode("utf-8"))
+            # print((unicode(score) + ' ' + p.name + ' ' + varstring + ' ' + '#'.join(wordformlist)).encode("utf-8"))
             if print_tables:
                 for form, msd in table:
                     if form in words:
                         form = "*" + form + "*"
                     msdprint = ','.join([m[0] + '=' + m[1] for m in msd])
-                    print((form + '\t' + msdprint).encode("utf-8"))
+                    # print((form + '\t' + msdprint).encode("utf-8"))
 
             if debug:
                print("Members:", ", ".join([p(*[var[1] for var in vs])[0][0] for vs in p.var_insts]))
@@ -194,6 +192,7 @@ def test_paradigms(inp, paradigms, numexamples, lms, print_tables, debug,
                    pprior, choose=False, returnempty=True, match_all=False,
                    baseform=False):
     tags = []
+    # print('test', len(paradigms), paradigms)
     if choose:
         word, lemgram = inp.strip().split()
         words = [word]
@@ -202,7 +201,7 @@ def test_paradigms(inp, paradigms, numexamples, lms, print_tables, debug,
     else:
         words = inp  # line.strip().split()
 
-    print('input', words, 'tags', tags)
+    # print('input', words, 'tags', tags)
     if len(words) == 0:
         return []
 
@@ -221,17 +220,17 @@ def test_paradigms(inp, paradigms, numexamples, lms, print_tables, debug,
             #    print('p',p, 'ok?',ok)
         else:
             fittingparadigms = [p for p in paradigms if all(p.fits_paradigm(w, constrained=False) for w in words)]
-        print('fitting', len(fittingparadigms))
+        # print('fitting', len(fittingparadigms))
 
     # print('fitting', len(fittingparadigms))
     # print('test', words, 'tags', tags)
     fittingparadigms = list(filter(lambda p: eval_multiple_entries(p, words, tags, baseform=baseform), fittingparadigms))
-    print('now fitting', len(fittingparadigms))
+    # print('now fitting', len(fittingparadigms))
     # print('tested', words, 'tags', tags)
     # print('fitting', len(fittingparadigms))
     if debug:
     # Quick filter out most paradigms
-        # print("Plausible paradigms:")
+        print("Plausible paradigms:")
         for p in fittingparadigms:
             print(p.name)
 
@@ -260,7 +259,6 @@ def run_paradigms(fittingparadigms, words, kbest=1, vbest=3, pprior=0, lms={},
     analyses = []
     # Quick filter out most paradigms
     for p in fittingparadigms[:kbest]:
-        print('paradigm', p.name)
         lm_score = lms[p.uuid]
         analyses.extend(test_paradigm(p, words, numexamples, pprior, lm_score,
                                       baseform=baseform))
@@ -295,8 +293,8 @@ def test_paradigm(p, words, numexamples, pprior, lm_score, tags=[],
             return False
 
     if match_table:
-        print('Compare tables')
-        print('Goal %s' % match_table)
+        # print('Compare tables')
+        # print('Goal %s' % match_table)
         res = [(s, p, v) for (s, p, v) in res if match(p, v, match_table)]
     return res
 

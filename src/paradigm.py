@@ -141,13 +141,12 @@ class Paradigm:
             forms = self.forms[:1]
         else:
             forms = [f for f in self.forms if not f.identifier]
-        #print('match', w, tag, [f.msd for f in forms])
         if tag:
             forms = [f for f in forms if f.msd == tag]
-            #print('forms left', forms)
         for f in forms:
             #print('forms to evaluate', f.form, f.msd, 'to', w)
             xs = f.match_vars(w, constrained)
+            #print('vars', xs)
             result.append(xs)
         return result
 
