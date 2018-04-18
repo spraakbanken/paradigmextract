@@ -376,9 +376,7 @@ def learnparadigms(inflectiontables):
     for table, tagtable in inflectiontables:
         tablehead = table[0]
         taghead = tagtable[0]
-        # TODO find out if this is still needed. seems weird
-        # unless we're dealing with identifiers
-        if len(table) > 1:
+        if tagtable[0] == [('msd', 'identifier')]:
              table = table[1:]
              tagtable = tagtable[1:]
         wg = [wordgraph.wordtograph(x) for x in table]

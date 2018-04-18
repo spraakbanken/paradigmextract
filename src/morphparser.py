@@ -72,6 +72,14 @@ def paradigms_to_alphabet(paradigms):
     return alphabet - {'_'}
 
 
+def extend_alphabet(paradigm, alphabet):
+    """Extracts all used symbols from an iterable of one paradigm."""
+    for idx, (is_var, slot) in enumerate(paradigm.slots):
+        for word in slot:
+            alphabet |= set(word)
+    return alphabet - {'_'}
+
+
 def eval_vars(matches, lm):
     return sum(lm[1][midx].evaluate(m) for midx, m in enumerate(matches))
     # TODO fix
@@ -132,7 +140,7 @@ def main(argv):
         elif opt in ('-c', '--choose'):
             choose = True
     inp = iter(lambda: sys.stdin.readline().decode('utf-8'), '')
-    paras, numexamples, lms = build(sys.argv[1], ngramorder, ngramprior)
+    paras, numexamples, lms, alphabet = build(sys.argv[1], ngramorder, ngramprior)
     res = []
     for line in inp:
        res.append(test_paradigms(line, paras, numexamples, lms, print_tables, debug, pprior, choose))
@@ -175,17 +183,21 @@ def build(inpfile, ngramorder, ngramprior, small=False, lexicon='', inpformat='p
     lms = {}
     # Learn n-gram LM for each variable
     for p in paradigms:
-        numvars = (len(p.slots) - 1)/2
-        slotmodels  = []
-        for v in range(0, int(numvars)):
-            varinsts = p.slots[v*2+1][1]
-            model = stringngram(varinsts, alphabet = alphabet, order = ngramorder, ngramprior = ngramprior)
-            slotmodels.append(model)
-        lms[p.uuid] = (numvars, slotmodels)
+        lms_paradigm(p, lms, alphabet, ngramorder, ngramprior)
         if small:
             print('shrink')
             p.shrink()
-    return paradigms, numexamples, lms
+    return paradigms, numexamples, lms, alphabet
+
+
+def lms_paradigm(paradigm, lms, alphabet, ngramorder, ngramprior):
+    numvars = (len(paradigm.slots) - 1)/2
+    slotmodels = []
+    for v in range(0, int(numvars)):
+        varinsts = paradigm.slots[v*2+1][1]
+        model = stringngram(varinsts, alphabet=alphabet, order=ngramorder, ngramprior=ngramprior)
+        slotmodels.append(model)
+    lms[paradigm.uuid] = (numvars, slotmodels)
 
 
 def test_paradigms(inp, paradigms, numexamples, lms, print_tables, debug,
@@ -237,8 +249,11 @@ def test_paradigms(inp, paradigms, numexamples, lms, print_tables, debug,
     analyses = []
     # Calculate score for each possible variable assignment
     for p in fittingparadigms:
+        # print('test', p)
         lm_score = lms[p.uuid]
         match_table = list(zip(words, tags)) if match_all else []
+        # print('match_table', match_table)
+        # print('test', p, words, baseform)
         analyses.extend(test_paradigm(p, words, numexamples, pprior,
                                       lm_score, tags=tags,
                                       match_table=match_table,
