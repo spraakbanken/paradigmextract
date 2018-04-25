@@ -81,6 +81,10 @@ def extend_alphabet(paradigm, alphabet):
 
 
 def eval_vars(matches, lm):
+    if not lm[1]:
+        # if paradigm does not have any instances
+        # TODO magic number. 0 is too high
+        return -100
     return sum(lm[1][midx].evaluate(m) for midx, m in enumerate(matches))
     # TODO fix
     # except:
@@ -249,11 +253,11 @@ def test_paradigms(inp, paradigms, numexamples, lms, print_tables, debug,
     analyses = []
     # Calculate score for each possible variable assignment
     for p in fittingparadigms:
-        # print('test', p)
+        # print('test', p.p_id)
         lm_score = lms[p.uuid]
         match_table = list(zip(words, tags)) if match_all else []
         # print('match_table', match_table)
-        # print('test', p, words, baseform)
+        # print('test', p.p_id, words, baseform)
         analyses.extend(test_paradigm(p, words, numexamples, pprior,
                                       lm_score, tags=tags,
                                       match_table=match_table,
@@ -287,7 +291,11 @@ def test_paradigm(p, words, numexamples, pprior, lm_score, tags=[],
     # print(p.name)
     # print("p.count", p.count)
     # print('words', words)
-    prior = math.log(p.count/float(numexamples))
+    try:
+        prior = math.log(p.count/float(numexamples))
+    except ValueError:
+        print('error', 0)
+        prior = 0
     vars = eval_multiple_entries(p, words, tags, baseform=baseform)  # All possible instantiations
     if len(vars) == 0:
         # TODO this probably never happens, since p list is already filtered on

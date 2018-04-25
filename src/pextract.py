@@ -286,7 +286,7 @@ def findfactors(word, lcs):
 
 def vars_to_string(baseform, varlist):
     vstr = [(str(idx+1), v) for idx, v in enumerate(varlist)]
-    return [("0", baseform)]+vstr
+    return [("first-attest", baseform)]+vstr
 
 def split_tags(tags):
     spl = [tg.split(u',,') for tg in tags]

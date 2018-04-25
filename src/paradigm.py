@@ -58,6 +58,9 @@ class Paradigm:
     def set_uuid(self, uuid):
         self.uuid = uuid
 
+    def add_var_insts(self, var_inst):
+        self.var_insts.append([(str(key), val) for key, val in var_inst])
+
     def set_pos(self, pos):
         self.pos = pos
 
@@ -68,6 +71,9 @@ class Paradigm:
         self.var_insts = []
         self.members = []
         self.small = True
+
+    def empty_classes(self):
+        self.classes = {}
 
     def add_class(self, name, members):
         if name not in self.classes:
@@ -86,7 +92,7 @@ class Paradigm:
             if len(self.var_insts) != 0:
                 # TODO don't use name??
                 if not self.p_id:
-                    self.p_info['name'] = self.__call__(*[s for (_, s) in self.var_insts[0][1:]])[0][0]
+                    self.p_info['name'] = 'p_%s' % self.__call__(*[s for (_, s) in self.var_insts[0][1:]])[0][0]
                 # TODO it should be possible to update this
                 self.p_info['count'] = len(self.var_insts)
                 # TODO it should be possible to update this
@@ -94,8 +100,10 @@ class Paradigm:
             else:  # no variables
                 # TODO name might get weird without var_insts
                 if not self.p_id:
-                    self.p_info['name'] = self.__call__()[0][0]
-                self.p_info['count'] = 1
+                    self.p_info['name'] = 'p_%s' % self.__call__()[0][0]
+                self.p_info['members'] = []
+                # TODO changed from 1 to 0, since empty paradigms should not pretend to have members
+                self.p_info['count'] = 0
             self.p_info['slots'] = self.__slots()
         return self.p_info[attr]
 
@@ -118,7 +126,7 @@ class Paradigm:
             if i % 2 == 0:
                     slts.append((False, str_slots[s_index]))
                     s_index += 1
-            else:
+            elif var_slots:  # handle empty paradigms
                 slts.append((True, var_slots[v_index][1]))
                 v_index += 1
         return slts
@@ -144,9 +152,9 @@ class Paradigm:
         if tag:
             forms = [f for f in forms if f.msd == tag]
         for f in forms:
-            #print('forms to evaluate', f.form, f.msd, 'to', w)
+            # print('forms to evaluate', f.form, f.msd, 'to', w)
             xs = f.match_vars(w, constrained)
-            #print('vars', xs)
+            # print('vars', xs)
             result.append(xs)
         return result
 
