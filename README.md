@@ -1,3 +1,9 @@
+## NB!
+This is Språkbanken's inofficial version of the paradigmextract library.
+The main version can be found [here](https://github.com/marfors/paradigmextract).
+
+---\*---   ---\*---   ---\*---
+
 # Paradigm learning and paradigm prediction
 
 The software collection in this repository is related to a body of
