@@ -63,7 +63,6 @@ class genregex:
             self.stringset = set(self.strings)
             return
         # Case (2a): find longest suffix that has limited distribution
-        #for i in xrange(-self.minlen, 0):
         for i in range(-self.minlen, 0):
             suffstrings = map(lambda x: x[i:], self.strings)
             #if self._significancetest(len(suffstrings), len(set(suffstrings))):
@@ -72,7 +71,6 @@ class genregex:
                 break
         # Case (2b): find longest prefix that has limited distribution
         for i in range(self.minlen, 0, -1):
-        #for i in xrange(self.minlen, 0, -1):
             prefstrings = map(lambda x: x[:i], self.strings)
             if self._significancetest(len(list(prefstrings)), len(set(prefstrings))):
             #if self._significancetest(len(prefstrings), len(set(prefstrings))):
