@@ -9,6 +9,8 @@ import re
 import paradigmextract.regexmatcher as regexmatcher
 import sys
 
+from typing import List, Dict, Tuple, Set, Optional, Any
+
 
 def overlap(ss):
     count = 0
@@ -30,8 +32,8 @@ class Paradigm:
             Ex: [[('1','dimm')],[('1','dank')], ...]
     """
 
-    def __init__(self, form_msds, var_insts, p_id='', small=False, pos='',
-                 lex='', uuid='', classes={}):
+    def __init__(self, form_msds: List[Tuple[str, Any]], var_insts: List[List[Tuple[str, Any]]], p_id: str='', small: bool=False, pos: str = '',
+                 lex: str='', uuid: str='', classes={}) -> None:
         # def __init__(self, paradigm):
         # prefix: just for naming, exclude since we have p_id?
         # def __init__(self, form_msds, var_insts, prefix=None, p_id=None):
@@ -52,30 +54,31 @@ class Paradigm:
         for (f, msd) in form_msds:
             self.forms.append(Form(f, msd, var_insts))
 
-    def set_id(self, p_id):
+    def set_id(self, p_id: str) -> None:
         self.p_id = p_id
 
-    def set_uuid(self, uuid):
+    def set_uuid(self, uuid: str) -> None:
         self.uuid = uuid
 
-    def add_var_insts(self, var_inst):
+    # This one is probably broken, should be extend, not append?
+    def add_var_insts(self, var_inst: List[Tuple[Any, Any]]) -> None:
         self.var_insts.append([(str(key), val) for key, val in var_inst])
 
-    def set_pos(self, pos):
+    def set_pos(self, pos: str) -> None:
         self.pos = pos
 
-    def set_lexicon(self, lexicon):
+    def set_lexicon(self, lexicon: str) -> None:
         self.lex = lexicon
 
-    def shrink(self):
+    def shrink(self) -> None:
         self.var_insts = []
         self.members = []
         self.small = True
 
-    def empty_classes(self):
+    def empty_classes(self) -> None:
         self.classes = {}
 
-    def add_class(self, name, members):
+    def add_class(self, name, members) -> None:
         if name not in self.classes:
             print('classname', name)
             print('classse', self.classes)
@@ -108,7 +111,7 @@ class Paradigm:
             self.p_info['slots'] = self.__slots()
         return self.p_info[attr]
 
-    def __slots(self):
+    def __slots(self) -> List[Tuple[bool, Any]]:
         slts = []
         """Compute the content of the slots.
         """
@@ -132,7 +135,7 @@ class Paradigm:
                 v_index += 1
         return slts
 
-    def fits_paradigm(self, w, tag='', constrained=True, baseform=False):
+    def fits_paradigm(self, w: str, tag: str='', constrained: bool=True, baseform: bool=False) -> bool:
         # TODO will this make word fail if you provide all forms+identifier?
         for f in self.forms:
             if f.match(w, tag=tag, constrained=constrained) and not f.identifier:
@@ -141,7 +144,7 @@ class Paradigm:
                 break
         return False
 
-    def match(self, w, selection=None, constrained=True, tag='', baseform=False):
+    def match(self, w: str, selection=None, constrained: bool=True, tag: str='', baseform: True=False) -> List:
         result = []
         if selection is not None:
             forms = [self.forms[i] for i in selection]
@@ -158,7 +161,7 @@ class Paradigm:
             result.append(xs)
         return result
 
-    def paradigm_forms(self):
+    def paradigm_forms(self) -> List[Dict[str, Any]]:
         if len(self.var_insts) > 0:
             ss = [s for (_, s) in self.var_insts[0]]
         else:
@@ -218,7 +221,7 @@ class Form:
                 [] no msd available
                 [(None,'SGNOM')] no msd type available
     """
-    def __init__(self, form, msd=[], v_insts=[]):
+    def __init__(self, form: str, msd=[], v_insts: List[Tuple[str, Any]]=[]):
         (self.form, self.msd) = (form.split('+'), msd)
         self.scount = 0
         self.identifier = len(msd) > 0 and len(msd[0]) > 0 and msd[0][1] == "identifier"
@@ -244,7 +247,7 @@ class Form:
                 logging.error('error reading %s!' % ss)
                 raise
 
-    def shapes(self, ss):
+    def shapes(self, ss) -> Dict[str, Any]:
         w = "".join(self.__call__(*ss)[0])
         return {'form': "+".join(self.form),
                 'msd': self.msd,
@@ -268,13 +271,14 @@ class Form:
                 w.append(p)
         return (w, self.msd)
 
-    def match(self, w, tag='', constrained=True):
+    def match(self, w: str, tag: str='', constrained=True) -> Optional[List[Tuple[int, Any]]]:
         # print('compare', w, tag, 'to', self.msd)
         if tag and self.msd != tag:
             return False
+            # return None?
         return self.match_vars(w, constrained) is not None
 
-    def match_vars(self, w, constrained=True):
+    def match_vars(self, w: str, constrained: bool=True) -> Optional[List[Tuple[int, Any]]]:
         matcher = regexmatcher.mregex(self.regex)
         ms = matcher.findall(w)
         if ms is None:
@@ -310,7 +314,7 @@ class Form:
             else:
                 return result
 
-    def strs(self):
+    def strs(self) -> List[str]:
         """Collects the strings in a wordform.
            A variable is assumed to be surrounded by (possibly empty) strings.
         """
@@ -326,7 +330,7 @@ class Form:
             ss.append('_')
         return ss
 
-    def jsonify(self):
+    def jsonify(self) -> Dict[str, Any]:
         gram = {}
         process = []
         for (t, v) in self.msd:
@@ -355,7 +359,7 @@ class Form:
                 process.append(pr)
         return {"Process": process, "GrammaticalFeatures": gram}
 
-    def __str__(self):
+    def __str__(self) -> str:
         ms = []
         for (t, v) in self.msd:
             if t is not None:
@@ -372,7 +376,7 @@ class Form:
             return "%s::%s" % ("+".join(self.form), ",,".join(ms))
 
 
-def load_p_file(file, pos='', lex=''):
+def load_p_file(file: str, pos: str='', lex: str='') -> List[Paradigm]:
     paradigms = []
     line_no = 1
     with codecs.open(file, encoding='utf-8') as f:
@@ -407,7 +411,7 @@ def load_p_file(file, pos='', lex=''):
             for (i, (_, wfs, p_members)) in enumerate(paradigms, 1)]
 
 
-def load_json_file(file, lex='', pos=''):
+def load_json_file(file: str, lex: str='', pos: str='') -> List[Paradigm]:
     try:
         return load_json(json.load(codecs.open(file, encoding='utf-8')), lex=lex, pos=pos)
     except Exception as e:
@@ -415,7 +419,7 @@ def load_json_file(file, lex='', pos=''):
         raise
 
 
-def load_json(objs, lex='', pos=''):
+def load_json(objs: List[Dict[str, Any]], lex: str='', pos: str='') -> List[Paradigm]:
     paradigms = []
     obj_no = 1
     try:
@@ -454,7 +458,7 @@ def pr(i, b):
         return '[s] %d' % (i)
 
 
-if __name__ == '__main__':
+def main():
     if '-p' in sys.argv:
         for p in load_p_file(sys.argv[-1]):
             print('name: %s, count: %d' % (p.name, p.count))
@@ -486,3 +490,6 @@ if __name__ == '__main__':
 
     else:
             print('Usage: <program> [-p|-s] <paradigm_file>')
+
+if __name__ == '__main__':
+    main()

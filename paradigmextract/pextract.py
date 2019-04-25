@@ -4,6 +4,8 @@ import itertools
 import re
 import paradigmextract.paradigm as paradigm
 
+from typing import List, Dict, Tuple, Set
+
 
 # Wordgraph class to extract LCS
 class wordgraph:

@@ -1,3 +1,5 @@
+from typing import List, Dict, Tuple, Set
+
 class mregex:
 
     """Simple re.findall replacement that returns all possible matches -

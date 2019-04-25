@@ -28,11 +28,14 @@ import functools
 import math
 import paradigmextract.paradigm as paradigm
 import sys
+import json
+
+from typing import List, Dict, Tuple, Set
 
 
 class stringngram:
 
-    def __init__(self, stringset, alphabet=None, order=2, ngramprior=0.01):
+    def __init__(self, stringset: List[str], alphabet: Set[str] = None, order: int=2, ngramprior: float=0.01) -> None:
         """Read a set of strings and create an n-gram model."""
         self.stringset = [u'#'*(order-1) + s + u'#' for s in stringset]
         self.alphabet = {char for s in self.stringset for char in s}
@@ -49,20 +52,20 @@ class stringngram:
         for mgram in mgrams:
             self.ngramcounts[mgram] = self.ngramcounts.get(mgram, 0) + 1
 
-    def evaluate(self, string):
+    def evaluate(self, string: str) -> float:
         s = u'#'*(self.order-1) + string + u'#'
         return sum(self._getprob(x) for x in self._letter_ngrams(s, self.order))
 
-    def _getprob(self, ngram):
+    def _getprob(self, ngram) -> float:
         numerator = self.ngramcounts.get(ngram, 0) + self.ngramprior
         denominator = self.ngramcounts.get(ngram[:-1], 0) + len(self.alphabet) * self.ngramprior
         return math.log(numerator/float(denominator))
 
-    def _letter_ngrams(self, word, n):
+    def _letter_ngrams(self, word: str, n: int) -> List[str]:
         return [''.join(x) for x in zip(*[word[i:] for i in range(n)])]
 
 
-def paradigms_to_alphabet(paradigms):
+def paradigms_to_alphabet(paradigms: List[paradigm.Paradigm]) -> Set[str]:
     """Extracts all used symbols from an iterable of paradigms."""
     alphabet = set()
     for para in paradigms:
@@ -80,7 +83,7 @@ def extend_alphabet(paradigm, alphabet):
     return alphabet - {'_'}
 
 
-def eval_vars(matches, lm):
+def eval_vars(matches: List, lm: Tuple[float, List[stringngram]]):
     if not lm[1]:
         # If paradigm does not have any instances.
         # This may happen if the paradigms are not updated
@@ -90,7 +93,7 @@ def eval_vars(matches, lm):
     return sum(lm[1][midx].evaluate(m) for midx, m in enumerate(matches))
 
 
-def eval_multiple_entries(p, words, tags=[], baseform=False):
+def eval_multiple_entries(p: paradigm.Paradigm, words: List[str], tags: List[str]=(), baseform: bool=False) -> Set:
     """Returns a set of consistent variable assigment to all words."""
     wmatches = []
     # print('match', words, 'tags', tags)
@@ -164,14 +167,14 @@ def main(argv):
         print
 
 
-def build(inpfile, ngramorder, ngramprior, small=False, lexicon='',
-          inpformat='pfile', pos=''):
+def build(inpfile: str, ngramorder: int, ngramprior: float, small: bool=False, lexicon: str='', inpformat: str='pfile',
+          pos: str='') -> Tuple[List[paradigm.Paradigm], int, Dict[str, Tuple[float, List[stringngram]]], Set[str]]:
     if inpformat == 'pfile':
         paradigms = paradigm.load_p_file(inpfile, lex=lexicon)
     elif inpformat == 'jsonfile':
         paradigms = paradigm.load_json_file(inpfile, lex=lexicon, pos=pos)
     elif inpformat == 'json':
-        paradigms = paradigm.load_json(inpfile, lex=lexicon, pos=pos)
+        paradigms = paradigm.load_json(json.loads(inpfile), lex=lexicon, pos=pos)
     alphabet = paradigms_to_alphabet(paradigms)
 
     numexamples = sum(map(lambda x: x.count, paradigms))
@@ -186,7 +189,7 @@ def build(inpfile, ngramorder, ngramprior, small=False, lexicon='',
     return paradigms, numexamples, lms, alphabet
 
 
-def lms_paradigm(paradigm, lms, alphabet, ngramorder, ngramprior):
+def lms_paradigm(paradigm, lms, alphabet, ngramorder, ngramprior) -> None:
     numvars = (len(paradigm.slots) - 1)/2
     slotmodels = []
     for v in range(0, int(numvars)):
@@ -197,9 +200,10 @@ def lms_paradigm(paradigm, lms, alphabet, ngramorder, ngramprior):
     lms[paradigm.uuid] = (numvars, slotmodels)
 
 
-def test_paradigms(inp, paradigms, numexamples, lms, print_tables, debug,
-                   pprior, choose=False, returnempty=True, match_all=False,
-                   baseform=False):
+def test_paradigms(inp, paradigms: List[paradigm.Paradigm], numexamples: int,
+                   lms: Dict[str, Tuple[float, List[stringngram]]], print_tables, debug: bool,
+                   pprior: float, choose: bool=False, returnempty: bool=True, match_all: bool=False,
+                   baseform: bool=False):
     tags = []
     # print('test', len(paradigms), paradigms)
     if choose:
@@ -273,7 +277,8 @@ def run_paradigms(fittingparadigms, words, kbest=1, vbest=3, pprior=0, lms={},
     return analyses
 
 
-def test_paradigm(para, words, numexamples, pprior, lm_score, tags=[],
+def test_paradigm(para: paradigm.Paradigm, words: List[str], numexamples: int, pprior: float,
+                  lm_score: Tuple[float, List[stringngram]], tags: List=[],
                   match_table=[], baseform=False):
     res = []
     # print(para.name)
