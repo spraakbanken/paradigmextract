@@ -2,7 +2,7 @@ import sys
 import functools
 import itertools
 import re
-import paradigm
+import paradigmextract.paradigm as paradigm
 
 
 # Wordgraph class to extract LCS

@@ -26,7 +26,7 @@
 import getopt
 import functools
 import math
-import paradigm
+import paradigmextract.paradigm as paradigm
 import sys
 
 

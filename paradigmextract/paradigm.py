@@ -2,11 +2,11 @@
 
 import codecs
 from collections import defaultdict
-import genregex
+import paradigmextract.genregex as genregex
 import json
 import logging
 import re
-import regexmatcher
+import paradigmextract.regexmatcher as regexmatcher
 import sys
 
 

@@ -7,7 +7,7 @@ class mregex:
        i.e. the regexes behave as if they began with ^ and ended with $.
 
        Example usage:
-       >>> from regexmatcher import mregex
+       >>> from paradigmextract.regexmatcher import mregex
        >>> m = mregex('(.+)a(.+)as')
        >>> m.findall('bananas')
        [('b', 'nan'), ('ban', 'n')]
