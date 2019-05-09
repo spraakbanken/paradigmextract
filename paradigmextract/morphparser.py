@@ -140,6 +140,21 @@ def build(inpfile: str, ngramorder: int, ngramprior: float, small: bool = False,
     return paradigms, numexamples, lms, alphabet
 
 
+def build2(paradigms, ngramorder: int, ngramprior: float, small: bool = False) -> Tuple[List[paradigm.Paradigm], int, Dict[str, Tuple[float, List[stringngram]]], Set[str]]:
+    alphabet = paradigms_to_alphabet(paradigms)
+
+    numexamples = sum(map(lambda x: x.count, paradigms))
+
+    lms = {}
+    # Learn n-gram LM for each variable
+    for p in paradigms:
+        lms_paradigm(p, lms, alphabet, ngramorder, ngramprior)
+        if small:
+            print('shrink')
+            p.shrink()
+    return paradigms, numexamples, lms, alphabet
+
+
 def lms_paradigm(paradigm, lms, alphabet, ngramorder, ngramprior) -> None:
     numvars = (len(paradigm.slots) - 1) / 2
     slotmodels = []
