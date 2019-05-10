@@ -1,4 +1,4 @@
-from typing import List, Dict, Tuple, Set
+from typing import List
 
 
 class genregex:
@@ -88,7 +88,7 @@ class genregex:
     
     def fomaregex(self):
         # [?* suffix] & [prefix ?*] & [?^{min,max}]
-        def explode(string):
+        def explode(string: str):
             return '{' + string + '}'
         
         re = []

@@ -1,7 +1,5 @@
-from typing import List, Dict, Tuple, Set
 
 class mregex:
-
     """Simple re.findall replacement that returns all possible matches -
        not just the leftmost-longest match.
        Only handles (.+) and c constructs (c being an arbitrary character).
@@ -14,13 +12,16 @@ class mregex:
        >>> m.findall('bananas')
        [('b', 'nan'), ('ban', 'n')]
     """
+
     def __init__(self, regex):
         self.regex = regex
         self.regexlen = len(regex)
         self.text = ''
         self.textlen = 0
         self.matches = []
-        
+        self.results = []
+        self.matched = 0
+
     def findall(self, text):
         strindex = 0
         regindex = 0
@@ -30,9 +31,9 @@ class mregex:
         self.matched = 0
         self.match(strindex, regindex, [])
         if self.matched:
-            return [tuple(self.text[i:j] for i,j in r) for r in self.results]
+            return [tuple(self.text[i:j] for i, j in r) for r in self.results]
         return None
-    
+
     def match(self, strindex, regindex, groups):
         # Are we at end of regex _and_ text?
         if strindex == self.textlen and regindex == self.regexlen:
@@ -44,11 +45,11 @@ class mregex:
         if strindex == self.textlen or regindex == self.regexlen:
             return
         # Match (.+)-construct
-        if self.regex[regindex:regindex+4] == '(.+)':
+        if self.regex[regindex:regindex + 4] == '(.+)':
             for i in range(strindex + 1, self.textlen + 1):
                 self.match(i, regindex + 4, groups + [(strindex, i)])
         # Normal match (one character)
-        else: 
+        else:
             if self.text[strindex] == self.regex[regindex]:
                 self.match(strindex + 1, regindex + 1, groups)
         return

@@ -1,23 +1,20 @@
-import sys
 import functools
 import itertools
 import re
 import paradigmextract.paradigm as paradigm
 
-from typing import List, Dict, Tuple, Set
-
 
 # Wordgraph class to extract LCS
 class wordgraph:
-
     """Convert word w to directed graph that contains all subsequences of w."""
+
     @classmethod
     def wordtograph(cls, word):
         trans = {}
         for i in range(len(word)):
             for j in range(i, len(word)):
                 if (i, word[j]) not in trans:
-                    trans[(i, word[j])] = j+1
+                    trans[(i, word[j])] = j + 1
         grph = cls(trans)
         return grph
 
@@ -116,6 +113,7 @@ class wordgraph:
         for w in endstates:
             self._backtrace(maxsources, maxlen, w, [])
 
+
 ###############################################################################
 
 
@@ -149,7 +147,6 @@ def count_infix_segments(string):
 
 def count_infixes(string):
     """Counts total number of separate infix occurrences."""
-    totalinfixes = 0
     infix = 0
     runninginfixcount = 0
     totalinfixes = 0
@@ -165,7 +162,7 @@ def count_infixes(string):
     return totalinfixes
 
 
-def string_to_varstring(string, vars):
+def string_to_varstring(string, variables):
     varpos = 0
     s = []
     idx = 0
@@ -175,8 +172,8 @@ def string_to_varstring(string, vars):
                 s.append(u'+')
             idx += 1
             while string[idx] != u']':
-                idx += len(vars[varpos])
-                s.append(str(varpos+1))
+                idx += len(variables[varpos])
+                s.append(str(varpos + 1))
                 if idx < len(string) - 1:
                     s.append(u'+')
                 varpos += 1
@@ -204,7 +201,7 @@ def lcp(lst):
 
 def firstvarmatch(string, prefix):
     """See if first var is exactly prefix."""
-    if string[1:1+len(prefix)] == prefix:
+    if string[1:1 + len(prefix)] == prefix:
         return True
     else:
         return False
@@ -223,7 +220,7 @@ def evalfact(lcs, c):
                 inside = 1
             elif pos == u']':
                 inside = 0
-                breaks[p-1] = 1
+                breaks[p - 1] = 1
             else:
                 if inside:
                     p += 1
@@ -236,16 +233,16 @@ def evalfact(lcs, c):
                 finalbreaks[idx] = 1
 
     # Extract vars
-    vars = []
+    variables = []
     currvar = u''
     for idx, val in enumerate(lcs):
         currvar += lcs[idx]
         if finalbreaks[idx] == 1:
-            vars.append(currvar)
+            variables.append(currvar)
             currvar = u''
 
     numvars = sum(finalbreaks)
-    return (numvars, vars)
+    return numvars, variables
 
 
 def findfactors(word, lcs):
@@ -286,12 +283,13 @@ def findfactors(word, lcs):
     rec(word, lcs, 0, 0, 0, [])
     return factors[:]
 
+
 # [table, c,variabletable,variablelist,numvars,infixcount]
 
 
 def vars_to_string(baseform, varlist):
-    vstr = [(str(idx+1), v) for idx, v in enumerate(varlist)]
-    return [("first-attest", baseform)]+vstr
+    vstr = [(str(idx + 1), v) for idx, v in enumerate(varlist)]
+    return [("first-attest", baseform)] + vstr
 
 
 def split_tags(tags):
@@ -359,19 +357,24 @@ def ffilter_shortest_string(factorlist):
 
 
 def ffilter_shortest_infix(factorlist):
-    return [[x for x in w if count_infix_segments(x) == count_infix_segments(min(w, key=lambda x: count_infix_segments(x)))] for w in factorlist]
+    return [
+        [x for x in w if count_infix_segments(x) == count_infix_segments(min(w, key=lambda x: count_infix_segments(x)))]
+        for w in factorlist]
 
 
 def ffilter_longest_single_var(factorlist):
-    return [[x for x in w if longest_variable(x) == longest_variable(max(w, key=lambda x: longest_variable(x)))] for w in factorlist]
+    return [[x for x in w if longest_variable(x) == longest_variable(max(w, key=lambda x: longest_variable(x)))] for w
+            in factorlist]
 
 
 def ffilter_leftmost_sum(factorlist):
-    return [[x for x in w if sum(i for i in range(len(x)) if x.startswith('[', i)) == min(map(lambda x: sum(i for i in range(len(x)) if x.startswith('[', i)), w))] for w in factorlist]
+    return [[x for x in w if sum(i for i in range(len(x)) if x.startswith('[', i)) == min(
+        map(lambda x: sum(i for i in range(len(x)) if x.startswith('[', i)), w))] for w in factorlist]
 
 
 def filterbracketings(factorlist, functionlist, tablecap):
-    numcombinations = lambda f: functools.reduce(lambda x, y: x*len(y), f, 1)
+    def numcombinations(f):
+        return functools.reduce(lambda x, y: x * len(y), f, 1)
     if numcombinations(factorlist) > tablecap:
         for filterfunc in functionlist:
             factorlist = filterfunc(factorlist)
@@ -399,13 +402,14 @@ def learnparadigms(inflectiontables):
         combos = []
         for lcs in lcss:
             factorlist = [findfactors(w, lcs) for w in table]
-            factorlist = filterbracketings(factorlist, (ffilter_lcp, ffilter_shortest_string, ffilter_shortest_infix, ffilter_longest_single_var, ffilter_leftmost_sum), TABLELIMIT)
+            factorlist = filterbracketings(factorlist, (ffilter_lcp, ffilter_shortest_string, ffilter_shortest_infix,
+                                                        ffilter_longest_single_var, ffilter_leftmost_sum), TABLELIMIT)
             combinations = itertools.product(*factorlist)
             for c in combinations:
                 (numvars, variablelist) = evalfact(lcs, c)
                 infixcount = functools.reduce(lambda x, y: x + count_infix_segments(y), c, 0)
                 variabletable = [string_to_varstring(s, variablelist) for s in c]
-                combos.append([table, c,variabletable, variablelist, numvars, infixcount])
+                combos.append([table, c, variabletable, variablelist, numvars, infixcount])
 
         vartables.append((tablehead, taghead, combos, tagtable))
 
@@ -418,35 +422,3 @@ def learnparadigms(inflectiontables):
     paradigmlist = collapse_tables(filteredtables)
 
     return paradigmlist
-
-###############################################################################
-
-if __name__ == '__main__':
-
-    lines = [l.strip() for l in sys.stdin]
-    tables = []
-    thistable = []
-    thesetags = []
-    for l in lines:
-        if l == u'':
-            if len(thistable) > 0:
-                splittags = split_tags(thesetags)
-                tables.append((thistable, splittags))
-                thistable = []
-                thesetags = []
-        else:
-            if u'\t' in l:
-                form, tag = l.split(u'\t')
-            else:
-                form = l
-                tag = u''
-            thistable.append(form)
-            thesetags.append(tag)
-
-    if len(thistable) > 0:
-        splittags = split_tags(thesetags)
-        tables.append((thistable, splittags))
-
-    learnedparadigms = learnparadigms(tables)
-    for p in learnedparadigms:
-        print(p)
