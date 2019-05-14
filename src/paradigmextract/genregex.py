@@ -1,3 +1,6 @@
+from typing import List
+
+
 class genregex:
     
     """Generalizes a list of strings into a regex.
@@ -46,7 +49,7 @@ class genregex:
        [?* [{a}|{b}]] & [?^{1,2}] & [[{a}|{b}] ?*]
        """
     
-    def __init__(self, strings, pvalue = 0.05, length = True):
+    def __init__(self, strings: List[str], pvalue: float = 0.05, length: bool = True):
         self.strings = strings
         self.numstrings = len(self.strings)
         self.pvalue = pvalue
@@ -85,7 +88,7 @@ class genregex:
     
     def fomaregex(self):
         # [?* suffix] & [prefix ?*] & [?^{min,max}]
-        def explode(string):
+        def explode(string: str):
             return '{' + string + '}'
         
         re = []
@@ -118,7 +121,7 @@ class genregex:
         else:
             return '^' + re
     
-    def _significancetest(self, num, uniq):
+    def _significancetest(self, num: int, uniq: int):
         if (1.0-(1.0/(uniq+1.0))) ** num <= self.pvalue:
             return True
         return False
