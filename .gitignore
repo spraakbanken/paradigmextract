@@ -4,3 +4,5 @@ __pycache__
 .venv
 .pyre
 
+# VS Code settings
+.vscode/
