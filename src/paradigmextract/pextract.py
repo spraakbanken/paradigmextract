@@ -5,7 +5,7 @@ import paradigmextract.paradigm as paradigm
 
 
 # Wordgraph class to extract LCS
-class wordgraph:
+class WordGraph:
     """Convert word w to directed graph that contains all subsequences of w."""
 
     @classmethod
@@ -65,7 +65,7 @@ class wordgraph:
                         stack.append((atarget, btarget))
                     trans[(statemap[(asource, bsource)], sym)] = statemap[(atarget, btarget)]
 
-        return wordgraph(trans)
+        return WordGraph(trans)
 
     def _backtrace(self, maxsources, maxlen, state, tempstring):
         if state not in self.revtrans:
@@ -145,23 +145,6 @@ def count_infix_segments(string):
     return len(nobrackets)
 
 
-def count_infixes(string):
-    """Counts total number of separate infix occurrences."""
-    infix = 0
-    runninginfixcount = 0
-    totalinfixes = 0
-    for idx, val in enumerate(string):
-        if val == u'[':
-            infix = 0
-            totalinfixes += runninginfixcount
-            runninginfixcount = 0
-        elif val != u']' and infix:
-            runninginfixcount += 1
-        elif val == u']':
-            infix = 1
-    return totalinfixes
-
-
 def string_to_varstring(string, variables):
     varpos = 0
     s = []
@@ -199,12 +182,9 @@ def lcp(lst):
     return s1
 
 
-def firstvarmatch(string, prefix):
+def firstvarmatch(string, prefix) -> bool:
     """See if first var is exactly prefix."""
-    if string[1:1 + len(prefix)] == prefix:
-        return True
-    else:
-        return False
+    return string[1:1 + len(prefix)] == prefix
 
 
 def evalfact(lcs, c):
@@ -284,32 +264,9 @@ def findfactors(word, lcs):
     return factors[:]
 
 
-# [table, c,variabletable,variablelist,numvars,infixcount]
-
-
 def vars_to_string(baseform, varlist):
     vstr = [(str(idx + 1), v) for idx, v in enumerate(varlist)]
     return [("first-attest", baseform)] + vstr
-
-
-def split_tags(tags):
-    spl = [tg.split(u',,') for tg in tags]
-
-    newforms = []
-    ctr = 1
-    for form in spl:
-        newelement = []
-        for tagelement in form:
-            if tagelement == u'':
-                newelement.append((str(ctr), u'1'))
-            elif u'=' in tagelement:
-                splittag = tagelement.split(u'=')
-                newelement.append((splittag[0], splittag[1]))
-            else:
-                newelement.append((tagelement, u'1'))
-        newforms.append(newelement)
-        ctr += 1
-    return newforms
 
 
 def collapse_tables(tables):
@@ -331,10 +288,7 @@ def collapse_tables(tables):
                 varstring.append(vars_to_string(tab2[0], t2[3]))
                 collapsedidx.update({idx2})
         varstring.append(vars_to_string(tab[0], t[3]))
-        # splittags = split_tags(tags)
-        # TODO are tags ever non-splitted here?
-        splittags = tags
-        formlist = zip(t[2], splittags)
+        formlist = zip(t[2], tags)
         try:
             p = paradigm.Paradigm(formlist, varstring)
         except:
@@ -385,14 +339,14 @@ def filterbracketings(factorlist, functionlist, tablecap):
 
 def learnparadigms(inflectiontables):
     vartables = []
-    TABLELIMIT = 16
+    table_limit = 16
     for table, tagtable in inflectiontables:
         tablehead = table[0]
         taghead = tagtable[0]
         if tagtable[0] == [('msd', 'identifier')]:
             table = table[1:]
             tagtable = tagtable[1:]
-        wg = [wordgraph.wordtograph(x) for x in table]
+        wg = [WordGraph.wordtograph(x) for x in table]
         result = functools.reduce(lambda x, y: x & y, wg)
         lcss = result.longestwords
         if not lcss:  # Table has no LCS - no variables
@@ -403,7 +357,7 @@ def learnparadigms(inflectiontables):
         for lcs in lcss:
             factorlist = [findfactors(w, lcs) for w in table]
             factorlist = filterbracketings(factorlist, (ffilter_lcp, ffilter_shortest_string, ffilter_shortest_infix,
-                                                        ffilter_longest_single_var, ffilter_leftmost_sum), TABLELIMIT)
+                                                        ffilter_longest_single_var, ffilter_leftmost_sum), table_limit)
             combinations = itertools.product(*factorlist)
             for c in combinations:
                 (numvars, variablelist) = evalfact(lcs, c)

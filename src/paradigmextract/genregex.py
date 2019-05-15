@@ -1,8 +1,8 @@
 from typing import List
 
 
-class genregex:
-    
+class Genregex:
+
     """Generalizes a list of strings into a regex.
        The main strategy is to find those complete strings, suffixes, or
        prefixes in the set that seem to be restricted in their distribution
@@ -42,7 +42,7 @@ class genregex:
        
        Example:
        >>>words = ['ab','ab','ab','ba','ba','ba','ab','ba','a','b']
-       >>>r = genregex.genregex(words)
+       >>>r = Genregex(words)
        >>>print r.pyregex()
        ^(?=.*(a|b)$)(?=.{1,2}$)(a|b)
        >>>print r.fomaregex()
@@ -53,8 +53,8 @@ class genregex:
         self.strings = strings
         self.numstrings = len(self.strings)
         self.pvalue = pvalue
-        self.minlen = len(min(self.strings, key = len))
-        self.maxlen = len(max(self.strings, key = len))
+        self.minlen = len(min(self.strings, key=len))
+        self.maxlen = len(max(self.strings, key=len))
         self.length = length
         self.stringset = set()
         self.prefixset = set()
@@ -68,7 +68,6 @@ class genregex:
         # Case (2a): find longest suffix that has limited distribution
         for i in range(-self.minlen, 0):
             suffstrings = map(lambda x: x[i:], self.strings)
-            #if self._significancetest(len(suffstrings), len(set(suffstrings))):
             if self._significancetest(len(list(suffstrings)), len(set(suffstrings))):
                 self.suffixset = set(suffstrings)
                 break
@@ -76,7 +75,6 @@ class genregex:
         for i in range(self.minlen, 0, -1):
             prefstrings = map(lambda x: x[:i], self.strings)
             if self._significancetest(len(list(prefstrings)), len(set(prefstrings))):
-            #if self._significancetest(len(prefstrings), len(set(prefstrings))):
                 self.prefixset = set(prefstrings)
                 break
         # Case (2c): find out if stringlengths have limited distribution

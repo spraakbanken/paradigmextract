@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import codecs
 from collections import defaultdict
 import paradigmextract.genregex as genregex
@@ -23,10 +21,9 @@ class Paradigm:
 
     def __init__(self, form_msds: List[Tuple[str, Any]], var_insts: List[List[Tuple[str, Any]]], p_id: str = '',
                  small: bool = False, pos: str = '',
-                 lex: str = '', uuid: str = '', classes={}) -> None:
-        # def __init__(self, paradigm):
-        # prefix: just for naming, exclude since we have p_id?
-        # def __init__(self, form_msds, var_insts, prefix=None, p_id=None):
+                 lex: str = '', uuid: str = '', classes: Optional[Dict]=None) -> None:
+        if classes is None:
+            classes = {}
         logging.debug('make paradigm %s %s in lexicon %s' % (p_id, uuid, lex))
         self.p_info = {}
         self.small = small
@@ -62,7 +59,6 @@ class Paradigm:
 
     def shrink(self) -> None:
         self.var_insts = []
-        self.members = []
         self.small = True
 
     def empty_classes(self) -> None:
@@ -73,9 +69,7 @@ class Paradigm:
             print('classname', name)
             print('classse', self.classes)
             self.classes[name] = set()
-        # print('add class', name, members)
         self.classes[name].update(members)
-        # print('added class', self.classes)
 
     def __getattr__(self, attr):
         # TODO Will mflbackend need to recompute this when updating paradigms?
@@ -146,9 +140,7 @@ class Paradigm:
         if tag:
             forms = [f for f in forms if f.msd == tag]
         for f in forms:
-            # print('forms to evaluate', f.form, f.msd, 'to', w)
             xs = f.match_vars(w, constrained)
-            # print('vars', xs)
             result.append(xs)
         return result
 
@@ -165,32 +157,6 @@ class Paradigm:
             (w, msd) = f(*insts)
             table.append((''.join(w), msd))
         return table
-
-    # function for construction paradigm lmf-json objects
-    def jsonify(self):
-        paradigm = {
-            # If used with Karp: lexiconName is needed
-            '_lexiconName': self.lex,
-            'lexiconName': self.lex,
-            '_partOfSpeech': self.pos,
-            '_entries': len(self.members),
-            '_uuid': self.uuid,
-            'MorphologicalPatternID': self.name,
-            'VariableInstances': []
-        }
-        for var_inst in self.var_insts:
-            paradigm['VariableInstances'].append({})
-            for v, i in var_inst:
-                if v in ["0", 0]:
-                    v = "first-attest"
-                paradigm['VariableInstances'][-1][v] = i
-
-        paradigm['TransformCategory'] = {}
-        for key, mem in self.classes.items():
-            paradigm['TransformCategory'][key] = list(mem)
-
-        paradigm["TransformSet"] = [form.jsonify() for form in self.forms if not form.identifier]
-        return paradigm
 
     def pattern(self):
         return "#".join([f.__str__() for f in self.forms])
@@ -235,7 +201,7 @@ class Form:
         self.v_regex = []
         for (_, ss) in collect_vars.items():
             try:
-                self.v_regex.append(re.compile(genregex.genregex(ss, pvalue=0.05).pyregex()))
+                self.v_regex.append(re.compile(genregex.Genregex(ss, pvalue=0.05).pyregex()))
             except:
                 logging.error('error reading %s!' % ss)
                 raise
@@ -271,7 +237,7 @@ class Form:
         return self.match_vars(w, constrained) is not None
 
     def match_vars(self, w: str, constrained: bool = True) -> Optional[List[Tuple[int, Any]]]:
-        matcher = regexmatcher.mregex(self.regex)
+        matcher = regexmatcher.MRegex(self.regex)
         ms = matcher.findall(w)
         if ms is None:
             return None
@@ -321,35 +287,6 @@ class Form:
         if self.form[-1].isdigit():
             ss.append('_')
         return ss
-
-    def jsonify(self) -> Dict[str, Any]:
-        gram = {}
-        process = []
-        for (t, v) in self.msd:
-            if t is not None:
-                if v is not None:
-                    gram[t] = v
-                else:
-                    gram[t] = ''
-            else:
-                if v is not None:
-                    gram['msd'] = 'v'
-        for part in self.form:
-            if part.isdigit():
-                pr = {
-                    "operator": "addAfter",
-                    "processType": "pextractAddVariable",
-                    "variableNum": part
-                }
-                process.append(pr)
-            else:
-                pr = {
-                    "operator": "addAfter",
-                    "processType": "pextractAddConstant",
-                    "stringValue": part
-                }
-                process.append(pr)
-        return {"Process": process, "GrammaticalFeatures": gram}
 
     def __str__(self) -> str:
         ms = []

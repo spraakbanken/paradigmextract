@@ -3,6 +3,23 @@ import sys
 
 import paradigmextract.morphanalyzer as morphanalyzer
 import paradigmextract.paradigm as paradigm
+### Create a foma-compatible morphological analyzer from paradigm file ###
+
+# Options:
+# -o  recreate original data (all vars must be exactly instantiated as seen in training data)
+# -c  constrain variables by generalizing (default pvalue = 0.05)
+# -u  unconstrained (all variables are defined as ?+)
+# -p  <pvalue>  use <pvalue> together with -c
+# -s  keep different analyzers separate instead of merging with priority union
+#     (may be necessary for some analyzers)
+# -n  name of binary foma file to compile to
+
+# Any combination of the above may be used. The analyzers are combined by
+# priority union, e.g. -o -c -u would yield an analyzer
+# [ Goriginal .P. Gconstrained .P. Gunconstrained ]
+
+# Example usage:
+# python morphanalyzer.py -o -c ./../paradigms/spanish_verbs.p > spanish_verbs.foma
 
 
 def main(argv):

@@ -1,5 +1,5 @@
 
-class mregex:
+class MRegex:
     """Simple re.findall replacement that returns all possible matches -
        not just the leftmost-longest match.
        Only handles (.+) and c constructs (c being an arbitrary character).
@@ -7,8 +7,8 @@ class mregex:
        i.e. the regexes behave as if they began with ^ and ended with $.
 
        Example usage:
-       >>> from paradigmextract.regexmatcher import mregex
-       >>> m = mregex('(.+)a(.+)as')
+       >>> from paradigmextract.regexmatcher import MRegex
+       >>> m = MRegex('(.+)a(.+)as')
        >>> m.findall('bananas')
        [('b', 'nan'), ('ban', 'n')]
     """
@@ -20,7 +20,7 @@ class mregex:
         self.textlen = 0
         self.matches = []
         self.results = []
-        self.matched = 0
+        self.matched = False
 
     def findall(self, text):
         strindex = 0
@@ -28,7 +28,7 @@ class mregex:
         self.text = text
         self.textlen = len(text)
         self.results = []
-        self.matched = 0
+        self.matched = False
         self.match(strindex, regindex, [])
         if self.matched:
             return [tuple(self.text[i:j] for i, j in r) for r in self.results]
@@ -37,7 +37,7 @@ class mregex:
     def match(self, strindex, regindex, groups):
         # Are we at end of regex _and_ text?
         if strindex == self.textlen and regindex == self.regexlen:
-            self.matched = 1
+            self.matched = True
             if groups:
                 self.results.append(groups)
             return

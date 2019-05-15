@@ -1,3 +1,29 @@
+# Do morphological analysis based on learned paradigms
+# Reads one or more whitespace-separated words from STDIN and
+# returns the most plausible analysis for the set in the format:
+# SCORE  NAME_OF_PARADIGM  VARIABLES  WORDFORM1:BASEFORM,MSD#WORDFORM2:BASEFORM,MSD...
+
+# Flags:
+# -k num   print the k best analyses
+# -t       print the entire table for the best analysis
+# -d       print debug info
+# -n num   use an nth order ngram model for selecting best paradigm
+#          (an n-gram model for variables in the paradigm is used)
+
+# Example:
+# echo "coger cojo" | python morphparser.py ./../paradigms/spanish_verbs.p -k 1 -t
+#
+# Output:
+
+# -11.231539838 coger (1=co) coger:coger,type=infinitive#cojo:coger,person=1st,number=singular,tense=present,mood=indicative
+# *coger*	type=infinitive
+# cogiendo	type=participle,tense=present
+# cogido	type=participle,tense=past
+# *cojo*	person=1st,number=singular,tense=present,mood=indicative
+# coges	person=2nd,number=singular,tense=present,mood=indicative
+# coge	person=3rd,number=singular,tense=present,mood=indicative
+# ...
+
 import sys
 import getopt
 
