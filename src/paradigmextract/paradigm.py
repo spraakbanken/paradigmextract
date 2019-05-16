@@ -138,7 +138,7 @@ class Paradigm:
         else:
             forms = [f for f in self.forms if not f.identifier]
         if tag:
-            forms = [f for f in forms if f.msd == tag]
+            forms = [f for f in forms if f.msd[0][1] == tag]
         for f in forms:
             xs = f.match_vars(w, constrained)
             result.append(xs)

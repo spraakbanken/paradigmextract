@@ -194,15 +194,14 @@ def test_paradigms(inp, paradigms: List[paradigm.Paradigm], numexamples: int,
 
 
 def run_paradigms(fittingparadigms, words, kbest=1, pprior=0, lms=None,
-                  numexamples=1, debug=False, baseform=False) -> List[Tuple[float, paradigm.Paradigm, Iterable[str]]]:
+                  numexamples=1, debug=False, baseform=False, tags=()) -> List[Tuple[float, paradigm.Paradigm, Iterable[str]]]:
     if lms is None:
         lms = {}
     analyses = []
     # Quick filter out most paradigms
     for p in fittingparadigms[:kbest]:
         lm_score = lms[p.uuid]
-        analyses.extend(test_paradigm(p, words, numexamples, pprior, lm_score,
-                                      baseform=baseform))
+        analyses.extend(test_paradigm(p, words, numexamples, pprior, lm_score, tags=tags, baseform=baseform))
 
     return analyses
 
