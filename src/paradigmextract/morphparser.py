@@ -165,7 +165,6 @@ def test_paradigm(para: paradigm.Paradigm, words: List[str], numexamples: int, p
     try:
         prior = math.log(para.count / float(numexamples))
     except ValueError:
-        print('error', 0)
         prior = 0
     # All possible instantiations
     variables = eval_multiple_entries(para, words, tags, baseform=baseform)
