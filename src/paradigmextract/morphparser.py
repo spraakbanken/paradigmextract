@@ -93,21 +93,21 @@ def build(paradigms, ngramorder: int, ngramprior: float, small: bool = False
     lms = {}
     # Learn n-gram LM for each variable
     for p in paradigms:
-        lms_paradigm(p, lms, alphabet, ngramorder, ngramprior)
+        lms[p.uuid] = lms_paradigm(p, alphabet, ngramorder, ngramprior)
         if small:
             p.shrink()
     return paradigms, numexamples, lms, alphabet
 
 
-def lms_paradigm(paradigm, lms, alphabet, ngramorder, ngramprior) -> None:
-    numvars = (len(paradigm.slots) - 1) / 2
+def lms_paradigm(paradigm_, alphabet, ngramorder, ngramprior) -> Tuple[float, List[StringNgram]]:
+    numvars = (len(paradigm_.slots) - 1) / 2
     slotmodels = []
     for v in range(0, int(numvars)):
-        varinsts = paradigm.slots[v * 2 + 1][1]
+        varinsts = paradigm_.slots[v * 2 + 1][1]
         model = StringNgram(varinsts, alphabet=alphabet, order=ngramorder,
                             ngramprior=ngramprior)
         slotmodels.append(model)
-    lms[paradigm.uuid] = (numvars, slotmodels)
+    return numvars, slotmodels
 
 
 def test_paradigms(inp, paradigms: List[paradigm.Paradigm], numexamples: int,
