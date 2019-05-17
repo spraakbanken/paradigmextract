@@ -1,7 +1,6 @@
 import functools
 import math
 import paradigmextract.paradigm as paradigm
-import json
 
 from typing import List, Dict, Tuple, Set, Optional, Sequence, Any, Iterable
 
@@ -50,14 +49,6 @@ def paradigms_to_alphabet(paradigms: List[paradigm.Paradigm]) -> Set[str]:
     return alphabet - {'_'}
 
 
-def extend_alphabet(p, alphabet):
-    """Extracts all used symbols from an iterable of one paradigm."""
-    for idx, (is_var, slot) in enumerate(p.slots):
-        for word in slot:
-            alphabet |= set(word)
-    return alphabet - {'_'}
-
-
 def eval_vars(matches: List, lm: Tuple[float, List[StringNgram]]):
     if not lm[1]:
         # If paradigm does not have any instances.
@@ -86,21 +77,15 @@ def eval_multiple_entries(p: paradigm.Paradigm, words: List[str],
                 if len(submatch) > 0:
                     wmatch.add(submatch[1])
         wmatches.append(wmatch)
-    consistentvars = functools.reduce(lambda x, y: x & y, wmatches)
-    return consistentvars
+
+    def _union(x, y):
+        return x & y
+
+    return functools.reduce(_union, wmatches)
 
 
-def build(inpfile: str, ngramorder: int, ngramprior: float, small: bool = False, lexicon: str = '',
-          inpformat: str = 'pfile',
-          pos: str = '') -> Tuple[List[paradigm.Paradigm], int, Dict[str, Tuple[float, List[StringNgram]]], Set[str]]:
-    if inpformat == 'pfile':
-        paradigms = paradigm.load_p_file(inpfile, lex=lexicon)
-    elif inpformat == 'jsonfile':
-        paradigms = paradigm.load_json_file(inpfile, lex=lexicon, pos=pos)
-    elif inpformat == 'json':
-        paradigms = paradigm.load_json(json.loads(inpfile), lex=lexicon, pos=pos)
-    else:
-        raise RuntimeError('Wrong input format')
+def build(paradigms, ngramorder: int, ngramprior: float, small: bool = False
+        ) -> Tuple[List[paradigm.Paradigm], int, Dict[str, Tuple[float, List[StringNgram]]], Set[str]]:
     alphabet = paradigms_to_alphabet(paradigms)
 
     numexamples = sum(map(lambda x: x.count, paradigms))
@@ -110,23 +95,6 @@ def build(inpfile: str, ngramorder: int, ngramprior: float, small: bool = False,
     for p in paradigms:
         lms_paradigm(p, lms, alphabet, ngramorder, ngramprior)
         if small:
-            print('shrink')
-            p.shrink()
-    return paradigms, numexamples, lms, alphabet
-
-
-def build2(paradigms, ngramorder: int, ngramprior: float, small: bool = False
-           ) -> Tuple[List[paradigm.Paradigm], int, Dict[str, Tuple[float, List[StringNgram]]], Set[str]]:
-    alphabet = paradigms_to_alphabet(paradigms)
-
-    numexamples = sum(map(lambda x: x.count, paradigms))
-
-    lms = {}
-    # Learn n-gram LM for each variable
-    for p in paradigms:
-        lms_paradigm(p, lms, alphabet, ngramorder, ngramprior)
-        if small:
-            print('shrink')
             p.shrink()
     return paradigms, numexamples, lms, alphabet
 

@@ -23,11 +23,30 @@
 # coges	person=2nd,number=singular,tense=present,mood=indicative
 # coge	person=3rd,number=singular,tense=present,mood=indicative
 # ...
-
+from typing import Tuple, List, Dict, Set
 import sys
 import getopt
+import json
 
 import paradigmextract.morphparser as morphparser
+import paradigmextract.paradigm as paradigm
+
+
+def build(inpfile: str, ngramorder: int, ngramprior: float, small: bool = False, lexicon: str = '',
+          inpformat: str = 'pfile',
+          pos: str = '') -> Tuple[List[paradigm.Paradigm], int, Dict[str, Tuple[float, List[morphparser.StringNgram]]], Set[str]]:
+    if inpformat == 'pfile':
+        paradigms = paradigm.load_p_file(inpfile, lex=lexicon)
+    elif inpformat == 'jsonfile':
+        paradigms = paradigm.load_json_file(inpfile, lex=lexicon, pos=pos)
+    elif inpformat == 'json':
+        paradigms = paradigm.load_json(json.loads(inpfile), lex=lexicon, pos=pos)
+    else:
+        raise RuntimeError('Wrong input format')
+
+    # lexicon is removed from build in morphparser
+
+    return morphparser.build(paradigms, ngramorder, ngramprior, small=small)
 
 
 def main(argv):
@@ -60,7 +79,7 @@ def main(argv):
         elif opt in ('-c', '--choose'):
             choose = True
     inp = iter(lambda: sys.stdin.readline().decode('utf-8'), '')
-    paras, numexamples, lms, alphabet = morphparser.build(sys.argv[1], ngramorder, ngramprior)
+    paras, numexamples, lms, alphabet = build(sys.argv[1], ngramorder, ngramprior)
     res = []
     for line in inp:
         res.append(morphparser.test_paradigms(line, paras, numexamples, lms, debug, pprior, choose))

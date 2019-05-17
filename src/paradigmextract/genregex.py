@@ -26,27 +26,12 @@ class Genregex:
        We also examine the distribution of string lengths. If, by the same analysis,
        the lengths of strings can be assumed to be drawn from a fixed set, we
        limit the set of allowable lengths.
-       
-       A regex can be returned either for python or foma. The regex
-       may need to check both the prefix and suffixes separately, which
-       is easily done in a foma-style regex since we can intersect the
-       prefix and suffix languages separately:
-         
-         [?* suffixes] & [prefixes ?*] & [?^{minlen, maxlen}]
-       
-       However, this can't be directly done in Python.  To simulate this,
-       we check the suffix (and possible length constraints) by a lookahead
-       which doesn't consume any symbols, before the checking the prefix, ie.
-         
-         ^(?=.*suffixes$)(?=.{minlen, maxlen})prefixes
-       
+
        Example:
        >>>words = ['ab','ab','ab','ba','ba','ba','ab','ba','a','b']
        >>>r = Genregex(words)
        >>>print r.pyregex()
        ^(?=.*(a|b)$)(?=.{1,2}$)(a|b)
-       >>>print r.fomaregex()
-       [?* [{a}|{b}]] & [?^{1,2}] & [[{a}|{b}] ?*]
        """
     
     def __init__(self, strings: List[str], pvalue: float = 0.05, length: bool = True):
@@ -83,26 +68,7 @@ class Genregex:
             if self._significancetest(self.numstrings, len(stringlengths)):
                 self.lenrange = (self.minlen, self.maxlen)
         return
-    
-    def fomaregex(self):
-        # [?* suffix] & [prefix ?*] & [?^{min,max}]
-        def explode(string: str):
-            return '{' + string + '}'
-        
-        re = []
-        if len(self.stringset) > 0:
-            return '[' + u'|'.join(map(explode, self.stringset)) + ']'
-        if len(self.suffixset) > 0:
-            re.append('[?* [' + '|'.join(map(explode, self.suffixset)) + ']]')
-        if len(self.lenrange) > 0:
-            re.append('[?^{' + str(self.lenrange[0]) + ',' + str(self.lenrange[1]) + '}]')
-        if len(self.prefixset) > 0:
-            re.append('[[' + '|'.join(map(explode, self.prefixset)) + '] ?*]')
-        if len(re) == 0:
-            return u'?+'
-        else:
-            return ' & '.join(re)
-    
+
     def pyregex(self):
         # ^(?=.*suffix$)(?=.{min,max}$)prefix
         re = u''
@@ -120,6 +86,4 @@ class Genregex:
             return '^' + re
     
     def _significancetest(self, num: int, uniq: int):
-        if (1.0-(1.0/(uniq+1.0))) ** num <= self.pvalue:
-            return True
-        return False
+        return (1.0-(1.0/(uniq+1.0))) ** num <= self.pvalue
