@@ -20,22 +20,17 @@ class Paradigm:
     """
 
     def __init__(self, form_msds: List[Tuple[str, Any]], var_insts: List[List[Tuple[str, Any]]], p_id: str = '',
-                 small: bool = False, pos: str = '',
-                 lex: str = '', uuid: str = '', classes: Optional[Dict]=None) -> None:
+                 pos: str = '', lex: str = '', uuid: str = '', classes: Optional[Dict]=None) -> None:
         if classes is None:
             classes = {}
         logging.debug('make paradigm %s %s in lexicon %s' % (p_id, uuid, lex))
         self.p_info = {}
-        self.small = small
         self.classes = classes
         self.forms = []
         self.pos = pos
         self.lex = lex
         self.uuid = uuid
-        if small:
-            self.var_insts = []
-        else:
-            self.var_insts = var_insts
+        self.var_insts = var_insts
         self.p_id = p_id
 
         for (f, msd) in form_msds:
@@ -56,10 +51,6 @@ class Paradigm:
 
     def set_lexicon(self, lexicon: str) -> None:
         self.lex = lexicon
-
-    def shrink(self) -> None:
-        self.var_insts = []
-        self.small = True
 
     def empty_classes(self) -> None:
         self.classes = {}
