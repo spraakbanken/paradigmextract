@@ -84,6 +84,30 @@ def eval_multiple_entries(p: paradigm.Paradigm, words: List[str],
     return functools.reduce(_union, wmatches)
 
 
+def eval_baseform(p: paradigm.Paradigm, word: str, possible_tags: Sequence[str]=()) -> Optional[List[str]]:
+    """Returns a set of variable assigment for word in the first tag that matches"""
+
+    def inner(tag=''):
+        baseform = not tag
+        matches = p.match(word, constrained=False, tag=tag, baseform=baseform)
+        for m in filter(lambda x: x is not None, matches):
+            if not m:
+                m = [(0, ())]  # Add dummy to show match is exact without vars
+            for submatch in m:
+                if len(submatch) > 0:
+                    return submatch[1]
+        return None
+
+    for possible_tag in possible_tags:
+        result = inner(tag=possible_tag)
+        if result is not None:
+            return list(result)
+    if not possible_tags:
+        result = inner()
+        return list(result) if result is not None else None
+    return None
+
+
 def build(paradigms, ngramorder: int, ngramprior: float
         ) -> Tuple[List[paradigm.Paradigm], int, Dict[str, Tuple[float, List[StringNgram]]], Set[str]]:
     alphabet = _paradigms_to_alphabet(paradigms)
@@ -169,11 +193,8 @@ def test_paradigm(para: paradigm.Paradigm, words: List[str], numexamples: int, p
     # All possible instantiations
     variables = eval_multiple_entries(para, words, tags, baseform=baseform)
     if len(variables) == 0:
-        # TODO this case probably never happens, since para list is already
-        # filtered by eval_multiple_entries.
-        # Word matches:
         score = prior
-        res.append((score, para, ()))
+        return [(score, para, ())]
     else:
         for v in variables:
             score = prior * pprior + len(words) * _eval_vars(v, lm_score)
