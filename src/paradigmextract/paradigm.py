@@ -18,12 +18,11 @@ class Paradigm:
     """
 
     def __init__(self, form_msds: List[Tuple[str, Any]], var_insts: List[List[Tuple[str, Any]]], p_id: str = '',
-                 pos: str = '', lex: str = '', uuid: str = '') -> None:
-        logging.debug('make paradigm %s %s in lexicon %s' % (p_id, uuid, lex))
+                 pos: str = '', uuid: str = '') -> None:
+        logging.debug('make paradigm %s %s' % (p_id, uuid))
         self.p_info = {}
         self.forms = []
         self.pos = pos
-        self.lex = lex
         self.uuid = uuid
         self.var_insts = var_insts
         self.p_id = p_id
