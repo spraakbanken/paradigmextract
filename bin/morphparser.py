@@ -52,7 +52,7 @@ def build(inpfile: str, ngramorder: int, ngramprior: float, small: bool = False,
 def main(argv):
 
     options, remainder = getopt.gnu_getopt(argv[1:], 'tk:n:p:dr:c',
-                                           ['tables', 'kbest', 'ngram', 'prior', 'debug', 'pprior', 'choose'])
+                                           ['tables', 'kbest', 'ngram', 'prior', 'debug', 'pprior'])
 
     print_tables = False
     kbest = 1
@@ -60,7 +60,6 @@ def main(argv):
     ngramprior = 0.01
     debug = False
     pprior = 1.0
-    choose = False
     for opt, arg in options:
         if opt in ('-t', '--tables'):
             print_tables = True
@@ -76,13 +75,11 @@ def main(argv):
             debug = True
         elif opt in ('-r', '--pprior'):
             pprior = float(arg)
-        elif opt in ('-c', '--choose'):
-            choose = True
     inp = iter(lambda: sys.stdin.readline().decode('utf-8'), '')
     paras, numexamples, lms, alphabet = build(sys.argv[1], ngramorder, ngramprior)
     res = []
     for line in inp:
-        res.append(morphparser.test_paradigms(line, paras, numexamples, lms, debug, pprior, choose))
+        res.append(morphparser.test_paradigms(line, paras, numexamples, lms, pprior))
 
     for words, analyses in res:
         # Print all analyses + optionally a table

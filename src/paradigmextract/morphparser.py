@@ -111,15 +111,11 @@ def lms_paradigm(paradigm_, alphabet, ngramorder, ngramprior) -> Tuple[float, Li
 
 
 def test_paradigms(inp, paradigms: List[paradigm.Paradigm], numexamples: int,
-                   lms: Dict[str, Tuple[float, List[StringNgram]]], debug: bool,
-                   pprior: float, choose: bool = False, match_all: bool = False,
+                   lms: Dict[str, Tuple[float, List[StringNgram]]],
+                   pprior: float, match_all: bool = False,
                    baseform: bool = False):
     tags = []
-    lemgram = ''
-    if choose:
-        word, lemgram = inp.strip().split()
-        words = [word]
-    elif type(inp) == tuple:
+    if type(inp) == tuple:
         words, tags = inp
     else:
         words = inp
@@ -127,25 +123,16 @@ def test_paradigms(inp, paradigms: List[paradigm.Paradigm], numexamples: int,
     if len(words) == 0:
         return []
 
-    if choose:
-        fittingparadigms = [p for p in paradigms if lemgram in p.members]
+    # Quick filter out most paradigms
+    if tags:
+        table = list(zip(words, tags))
+        fittingparadigms = [p for p in paradigms
+                            if all(p.fits_paradigm(w, constrained=False, tag=t) for w, t in table)]
     else:
-        # Quick filter out most paradigms
-        if tags:
-            table = list(zip(words, tags))
-            fittingparadigms = [p for p in paradigms
-                                if all(p.fits_paradigm(w, constrained=False, tag=t) for w, t in table)]
-        else:
-            fittingparadigms = [p for p in paradigms if all(p.fits_paradigm(w, constrained=False) for w in words)]
+        fittingparadigms = [p for p in paradigms if all(p.fits_paradigm(w, constrained=False) for w in words)]
 
     fittingparadigms = list(
         filter(lambda p: eval_multiple_entries(p, words, tags, baseform=baseform), fittingparadigms))
-
-    if debug:
-        # Quick filter out most paradigms
-        print("Plausible paradigms:")
-        for p in fittingparadigms:
-            print(p.name)
 
     analyses = []
     # Calculate score for each possible variable assignment
@@ -162,7 +149,7 @@ def test_paradigms(inp, paradigms: List[paradigm.Paradigm], numexamples: int,
 
 
 def run_paradigms(fittingparadigms, words, kbest=1, pprior=0, lms=None,
-                  numexamples=1, debug=False, baseform=False, tags=()) -> List[Tuple[float, paradigm.Paradigm, Iterable[str]]]:
+                  numexamples=1, baseform=False, tags=()) -> List[Tuple[float, paradigm.Paradigm, Iterable[str]]]:
     if lms is None:
         lms = {}
     analyses = []
