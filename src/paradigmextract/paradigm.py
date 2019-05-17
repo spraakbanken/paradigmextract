@@ -20,7 +20,7 @@ class Paradigm:
     def __init__(self, form_msds: List[Tuple[str, Any]], var_insts: List[List[Tuple[str, Any]]], p_id: str = '',
                  pos: str = '', uuid: str = '') -> None:
         logging.debug('make paradigm %s %s' % (p_id, uuid))
-        self.p_info = {}
+        self._p_info = {}
         self.forms = []
         self.pos = pos
         self.uuid = uuid
@@ -31,28 +31,27 @@ class Paradigm:
             self.forms.append(Form(f, msd, var_insts))
 
     def __getattr__(self, attr):
-        # TODO Will mflbackend need to recompute this when updating paradigms?
-        if len(self.p_info) > 0:  # Compute only once.
-            return self.p_info[attr]
+        """
+        Caches information about paradigm
+        Stuff gets weird when the paradigm has no members, should naming of a paradigm really be done here?
+        """
+        if len(self._p_info) > 0:
+            return self._p_info[attr]
         else:
             if self.p_id:
-                self.p_info['name'] = self.p_id
+                self._p_info['name'] = self.p_id
             if len(self.var_insts) != 0:
-                # TODO naming strategy: how to name paradigms?
                 if not self.p_id:
-                    self.p_info['name'] = 'p_%s' % self.__call__(*[s for (_, s) in self.var_insts[0][1:]])[0][0]
-                self.p_info['count'] = len(self.var_insts)
-                self.p_info['members'] = [var[0][1] for var in self.var_insts]
-            else:  # no variables
-                # TODO naming strategy: name might get weird without var_insts
+                    self._p_info['name'] = 'p_%s' % self.__call__(*[s for (_, s) in self.var_insts[0][1:]])[0][0]
+                self._p_info['count'] = len(self.var_insts)
+                self._p_info['members'] = [var[0][1] for var in self.var_insts]
+            else:
                 if not self.p_id:
-                    self.p_info['name'] = 'p_%s' % self.__call__()[0][0]
-                self.p_info['members'] = []
-                # TODO changed from 1 to 0, since empty paradigms should not pretend to have members
-                # May cause errors when calculating score
-                self.p_info['count'] = 0
-            self.p_info['slots'] = self.__slots()
-        return self.p_info[attr]
+                    self._p_info['name'] = 'p_%s' % self.__call__()[0][0]
+                self._p_info['members'] = []
+                self._p_info['count'] = 0
+            self._p_info['slots'] = self.__slots()
+        return self._p_info[attr]
 
     def __slots(self) -> List[Tuple[bool, Any]]:
         slts = []
