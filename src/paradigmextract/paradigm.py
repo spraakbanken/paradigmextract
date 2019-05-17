@@ -31,22 +31,6 @@ class Paradigm:
         for (f, msd) in form_msds:
             self.forms.append(Form(f, msd, var_insts))
 
-    def set_id(self, p_id: str) -> None:
-        self.p_id = p_id
-
-    def set_uuid(self, uuid: str) -> None:
-        self.uuid = uuid
-
-    # This one is probably broken, should be extend, not append?
-    def add_var_insts(self, var_inst: List[Tuple[Any, Any]]) -> None:
-        self.var_insts.append([(str(key), val) for key, val in var_inst])
-
-    def set_pos(self, pos: str) -> None:
-        self.pos = pos
-
-    def set_lexicon(self, lexicon: str) -> None:
-        self.lex = lexicon
-
     def __getattr__(self, attr):
         # TODO Will mflbackend need to recompute this when updating paradigms?
         if len(self.p_info) > 0:  # Compute only once.
@@ -126,9 +110,6 @@ class Paradigm:
             (w, msd) = f(*insts)
             table.append((''.join(w), msd))
         return table
-
-    def pattern(self):
-        return "#".join([f.__str__() for f in self.forms])
 
     def __str__(self):
         p = "#".join([f.__str__() for f in self.forms])
