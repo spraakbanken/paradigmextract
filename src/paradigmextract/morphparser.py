@@ -90,8 +90,8 @@ def eval_baseform(p: paradigm.Paradigm, word: str, possible_tags: Sequence[str]=
         matches = p.match(word, constrained=False, tag=tag, baseform=baseform)
         for m in filter(lambda x: x is not None, matches):
             if not m:
-                m = [(0, ())]  # Add dummy to show match is exact without vars
-            for submatch in m:
+                m = [(0, ())]  # match is exact without vars
+            for submatch in reversed(m):
                 if len(submatch) > 0:
                     return submatch[1]
         return None
