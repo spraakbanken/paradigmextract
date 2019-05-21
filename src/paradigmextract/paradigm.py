@@ -58,7 +58,7 @@ class Paradigm:
         """Compute the content of the slots.
         """
         # string slots
-        fs = [f.strs() for f in self.forms if not f.identifier]
+        fs = [f.strs() for f in self.forms]
         str_slots = list(zip(*fs))
         # var slots
         vt = defaultdict(list)
@@ -78,9 +78,8 @@ class Paradigm:
         return slts
 
     def fits_paradigm(self, w: str, tag: str = '', constrained: bool = True, baseform: bool = False) -> bool:
-        # TODO will this make word fail if you provide all forms+identifier?
         for f in self.forms:
-            if f.match(w, tag=tag, constrained=constrained) and not f.identifier:
+            if f.match(w, tag=tag, constrained=constrained):
                 return True
             if baseform:
                 break
@@ -94,9 +93,9 @@ class Paradigm:
         elif baseform:
             forms = self.forms[:1]
         else:
-            forms = [f for f in self.forms if not f.identifier]
+            forms = self.forms
         if tag:
-            forms = [f for f in forms if f.msd[0][1] == tag]
+            forms = [f for f in forms if f.msd == tag]
         for f in forms:
             xs = f.match_vars(w, constrained)
             result.append(xs)
@@ -131,7 +130,6 @@ class Form:
     def __init__(self, form: str, msd=(), v_insts: List[List[Tuple[str, Any]]] = ()):
         (self.form, self.msd) = (form.split('+'), msd)
         self.scount = 0
-        self.identifier = len(msd) > 0 and len(msd[0]) > 0 and msd[0][1] == "identifier"
         r = ''
         for f in self.form:
             if f.isdigit():

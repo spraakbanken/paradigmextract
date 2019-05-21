@@ -10,9 +10,6 @@ def learnparadigms(inflectiontables):
     for table, tagtable in inflectiontables:
         tablehead = table[0]
         taghead = tagtable[0]
-        if tagtable[0] == [('msd', 'identifier')]:
-            table = table[1:]
-            tagtable = tagtable[1:]
         wg = [WordGraph.wordtograph(x) for x in table]
         result = functools.reduce(lambda x, y: x & y, wg)
         lcss = result.longestwords

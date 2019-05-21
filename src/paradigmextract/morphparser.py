@@ -66,8 +66,6 @@ def eval_multiple_entries(p: paradigm.Paradigm, words: List[str],
     for ix, w in enumerate(words):
         tag = tags[ix] if len(tags) > ix else ''
         wmatch = set()
-        # TODO when to exclude tag???
-        # if not tag or tag[0][1] != 'identifier':
         restrict = not tag and ix == 0 and baseform
         matches = p.match(w, constrained=False, tag=tag, baseform=restrict)
         for m in filter(lambda x: x is not None, matches):
