@@ -18,15 +18,15 @@ def load_json(objs: List[Dict[str, Any]], lex: str = '', pos: str = '') -> List[
     paradigms = []
     obj_no = 1
     try:
-        for paradigm in objs:
-            var_insts = [list(inst.items()) for inst in paradigm.get('VariableInstances', [])]
-            p_id = paradigm.get('MorphologicalPatternID', '')
-            uuid = paradigm.get('_uuid', '')
+        for paradigm_ in objs:
+            var_insts = [list(inst.items()) for inst in paradigm_.get('VariableInstances', [])]
+            p_id = paradigm_.get('MorphologicalPatternID', '')
+            uuid = paradigm_.get('_uuid', '')
             form_msd = []
 
-            classes = dict([(key, set(val)) for key, val in paradigm.get('TransformCategory', {}).items()])
+            classes = dict([(key, set(val)) for key, val in paradigm_.get('TransformCategory', {}).items()])
 
-            for transform in paradigm.get("TransformSet", []):
+            for transform in paradigm_.get("TransformSet", []):
                 f = []
                 for p in transform.get("Process", []):
                     # TODO check processType? and operator?
