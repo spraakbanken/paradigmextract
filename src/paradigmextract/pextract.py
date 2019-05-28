@@ -2,12 +2,60 @@ import functools
 import itertools
 import re
 import paradigmextract.paradigm as paradigm
+import time
+
+
+def learnparadigms2(inflectiontables):
+    vartables = []
+    table_limit = 16
+    count = 0
+    for (identifier, (table, tagtable)) in inflectiontables:
+        print('on: ', count)
+        count += 1
+        tablehead = table[0]
+        taghead = tagtable[0]
+        wg = [WordGraph.wordtograph(x) for x in table]
+        result = functools.reduce(lambda x, y: x & y, wg)
+        lcss = result.longestwords
+        if not lcss:  # Table has no LCS - no variables
+            vartables.append((identifier, tablehead, taghead, [[table, table, table, [], 0, 0]], tagtable))
+            continue
+
+        combos = []
+        for lcs in lcss:
+            factorlist = [_findfactors(w, lcs) for w in table]
+            factorlist = _filterbracketings(factorlist, (_ffilter_lcp, _ffilter_shortest_string, _ffilter_shortest_infix,
+                                                         _ffilter_longest_single_var, _ffilter_leftmost_sum), table_limit)
+            combinations = itertools.product(*factorlist)
+            for c in combinations:
+                (numvars, variablelist) = _evalfact(lcs, c)
+                infixcount = functools.reduce(lambda x, y: x + _count_infix_segments(y), c, 0)
+                variabletable = [_string_to_varstring(s, variablelist) for s in c]
+                combos.append([table, c, variabletable, variablelist, numvars, infixcount])
+
+        vartables.append((identifier, tablehead, taghead, combos, tagtable))
+
+    filteredtables = []
+
+    for identifier, idform, idtag, t, tags in vartables:
+        besttable = min(t, key=lambda s: (s[4], s[5]))
+        filteredtables.append((identifier, idform, idtag, besttable, tags))
+
+    print("collapse")
+    before_t = time.time()
+    identifier_to_paradigm, paradigmlist = _collapse_tables2(filteredtables)
+    print("collapse done, took:", time.time() - before_t)
+
+    return identifier_to_paradigm, paradigmlist
 
 
 def learnparadigms(inflectiontables):
     vartables = []
     table_limit = 16
+    count = 0
     for table, tagtable in inflectiontables:
+        print('on: ', count)
+        count += 1
         tablehead = table[0]
         taghead = tagtable[0]
         wg = [WordGraph.wordtograph(x) for x in table]
@@ -37,7 +85,10 @@ def learnparadigms(inflectiontables):
         besttable = min(t, key=lambda s: (s[4], s[5]))
         filteredtables.append((idform, idtag, besttable, tags))
 
+    print("collapse")
+    before_t = time.time()
     paradigmlist = _collapse_tables(filteredtables)
+    print("collapse done, took:", time.time() - before_t)
 
     return paradigmlist
 
@@ -304,6 +355,42 @@ def _findfactors(word, lcs):
 def _vars_to_string(baseform, varlist):
     vstr = [(str(idx + 1), v) for idx, v in enumerate(varlist)]
     return [("first-attest", baseform)] + vstr
+
+
+def _collapse_tables2(tables):
+    """Input: list of tables
+       Output: Collapsed paradigms."""
+    idx_to_paradigm = dict()
+    identifier_to_paradigm = dict()
+    collapsedidx = set()  # Store indices to collapsed tables
+    for idx, (identifier, idform, idtag, besttable, tags) in enumerate(tables):
+        t = besttable
+        if idx in collapsedidx:
+            identifier_to_paradigm[identifier] = idx_to_paradigm[idx]
+            continue
+        varstring = []
+        vartable = t[2]
+        # Find similar tables
+        new_blabla = set()
+        for idx2, (identifier2, idform2, idtag2, besttable2, tags2) in enumerate(tables):
+            t2 = besttable2
+            if idx2 != idx and vartable == t2[2] and tags == tags2:
+                varstring.append(_vars_to_string(idform2, t2[3]))
+                new_blabla.add(idx2)
+        varstring.append(_vars_to_string(idform, t[3]))
+        formlist = zip(t[2], tags)
+        try:
+            p = paradigm.Paradigm(formlist, varstring)
+            idx_to_paradigm[idx] = p
+            for bla in list(new_blabla):
+                idx_to_paradigm[bla] = p
+            identifier_to_paradigm[identifier] = p
+            collapsedidx.update(new_blabla)
+        except:
+            print(formlist)
+            print(varstring)
+            raise
+    return identifier_to_paradigm, list(idx_to_paradigm.values())
 
 
 def _collapse_tables(tables):
