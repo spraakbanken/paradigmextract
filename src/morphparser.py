@@ -28,6 +28,7 @@ import functools
 import math
 import paradigm
 import sys
+import pytest
 
 
 class stringngram:
@@ -197,6 +198,7 @@ def lms_paradigm(paradigm, lms, alphabet, ngramorder, ngramprior):
     lms[paradigm.uuid] = (numvars, slotmodels)
 
 
+@pytest.mark.skip('not a test')
 def test_paradigms(inp, paradigms, numexamples, lms, print_tables, debug,
                    pprior, choose=False, returnempty=True, match_all=False,
                    baseform=False):
@@ -273,6 +275,7 @@ def run_paradigms(fittingparadigms, words, kbest=1, vbest=3, pprior=0, lms={},
     return analyses
 
 
+@pytest.mark.skip('not a test')
 def test_paradigm(para, words, numexamples, pprior, lm_score, tags=[],
                   match_table=[], baseform=False):
     res = []

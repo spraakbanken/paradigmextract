@@ -410,6 +410,14 @@ def learnparadigms(inflectiontables):
     filteredtables = []
 
     for idform, idtag, t, tags in vartables:
+        """
+        this becomes non-deterministic, different tables are selected different
+        runs for words that have many possible tables where infixcount and numvars is the same
+        for example: bortjaga, bortjagade, jagades bort etc is just as likely to have the paradigm:
+        "bort+1", "bort+1+de", "1+des bort" as
+        "1+jaga", "1+jagade", "jagades+ 1"
+        and sometimes it will get the first one and other times the second one
+        """
         besttable = min(t, key=lambda s: (s[4], s[5]))
         filteredtables.append((idform, idtag, besttable, tags))
 
