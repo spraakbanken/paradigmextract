@@ -22,6 +22,17 @@ def test_2():
 def test_3():
     form_msds = [('apa', ('msd', 'sg indef nom')), ('bepa', ('msd', 'pl def nom'))]
     p = Paradigm(form_msds, [[]])
-    words = ['apa']
-    variables = eval_multiple_entries(p, words, baseform=False)
+    tags = [('msd', 'sg indef nom'), ('msd', 'pl def nom')]
+
+    # exact table works
+    variables = eval_multiple_entries(p, ['apa', 'bepa'], tags=tags, baseform=False)
     assert {()} == variables
+
+    # conflicting table fails
+    variables = eval_multiple_entries(p, ['apa', 'other'], tags=tags)
+    assert set() == variables
+
+    # more forms than paradigm fails
+    tags.append(('msd', 'unknown'))
+    variables = eval_multiple_entries(p, ['apa', 'bepa', 'new'], tags=tags)
+    assert set() == variables
