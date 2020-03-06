@@ -217,7 +217,7 @@ class Form:
     def __init__(self, form: str, msd=(), v_insts: List[List[Tuple[str, Any]]] = ()):
         (self.form, self.msd) = (form.split('+'), msd)
         self.scount = 0
-        self.identifier = len(msd) > 0 and len(msd[0]) > 0 and msd[0][1] == "identifier"
+        self.identifier = len(msd) > 0 and len(msd[0]) > 1 and msd[0][1] == "identifier"
         r = ''
         for f in self.form:
             if f.isdigit():

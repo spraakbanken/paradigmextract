@@ -158,3 +158,19 @@ clean:
 #	cd src;python cexp.py ../paradigms/de_noun_train_dev.p ../data/de_noun_test.txt > ../output/de_noun.txt
 #	cd src;python cexp.py ../paradigms/fi_nounadj_train_dev.p ../data/fi_nounadj_test.txt > ../output/fi_nounadj.txt
 #	tail -n 3 output/*
+VENV_NAME = .venv
+
+install-venv: ${VENV_NAME}/venv.created
+
+${VENV_NAME}/venv.created:
+	test -d ${VENV_NAME} || python -m venv ${VENV_NAME}
+	@touch $@
+
+install-dev: install-venv ${VENV_NAME}/req.dev
+
+${VENV_NAME}/req.dev: setup.py setup.cfg requirements.txt
+	.venv/bin/pip install -e .[dev]
+	@touch $@
+
+test: install-dev
+	.venv/bin/pytest -vv tests
