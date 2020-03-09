@@ -1,8 +1,8 @@
 from typing import List
 
 
-class genregex:
-    
+class Genregex:
+
     """Generalizes a list of strings into a regex.
        The main strategy is to find those complete strings, suffixes, or
        prefixes in the set that seem to be restricted in their distribution
@@ -26,35 +26,20 @@ class genregex:
        We also examine the distribution of string lengths. If, by the same analysis,
        the lengths of strings can be assumed to be drawn from a fixed set, we
        limit the set of allowable lengths.
-       
-       A regex can be returned either for python or foma. The regex
-       may need to check both the prefix and suffixes separately, which
-       is easily done in a foma-style regex since we can intersect the
-       prefix and suffix languages separately:
-         
-         [?* suffixes] & [prefixes ?*] & [?^{minlen, maxlen}]
-       
-       However, this can't be directly done in Python.  To simulate this,
-       we check the suffix (and possible length constraints) by a lookahead
-       which doesn't consume any symbols, before the checking the prefix, ie.
-         
-         ^(?=.*suffixes$)(?=.{minlen, maxlen})prefixes
-       
+
        Example:
        >>>words = ['ab','ab','ab','ba','ba','ba','ab','ba','a','b']
-       >>>r = genregex.genregex(words)
+       >>>r = Genregex(words)
        >>>print r.pyregex()
        ^(?=.*(a|b)$)(?=.{1,2}$)(a|b)
-       >>>print r.fomaregex()
-       [?* [{a}|{b}]] & [?^{1,2}] & [[{a}|{b}] ?*]
        """
     
     def __init__(self, strings: List[str], pvalue: float = 0.05, length: bool = True):
         self.strings = strings
         self.numstrings = len(self.strings)
         self.pvalue = pvalue
-        self.minlen = len(min(self.strings, key = len))
-        self.maxlen = len(max(self.strings, key = len))
+        self.minlen = len(min(self.strings, key=len))
+        self.maxlen = len(max(self.strings, key=len))
         self.length = length
         self.stringset = set()
         self.prefixset = set()
@@ -68,7 +53,6 @@ class genregex:
         # Case (2a): find longest suffix that has limited distribution
         for i in range(-self.minlen, 0):
             suffstrings = map(lambda x: x[i:], self.strings)
-            #if self._significancetest(len(suffstrings), len(set(suffstrings))):
             if self._significancetest(len(list(suffstrings)), len(set(suffstrings))):
                 self.suffixset = set(suffstrings)
                 break
@@ -76,7 +60,6 @@ class genregex:
         for i in range(self.minlen, 0, -1):
             prefstrings = map(lambda x: x[:i], self.strings)
             if self._significancetest(len(list(prefstrings)), len(set(prefstrings))):
-            #if self._significancetest(len(prefstrings), len(set(prefstrings))):
                 self.prefixset = set(prefstrings)
                 break
         # Case (2c): find out if stringlengths have limited distribution
@@ -85,26 +68,7 @@ class genregex:
             if self._significancetest(self.numstrings, len(stringlengths)):
                 self.lenrange = (self.minlen, self.maxlen)
         return
-    
-    def fomaregex(self):
-        # [?* suffix] & [prefix ?*] & [?^{min,max}]
-        def explode(string: str):
-            return '{' + string + '}'
-        
-        re = []
-        if len(self.stringset) > 0:
-            return '[' + u'|'.join(map(explode, self.stringset)) + ']'
-        if len(self.suffixset) > 0:
-            re.append('[?* [' + '|'.join(map(explode, self.suffixset)) + ']]')
-        if len(self.lenrange) > 0:
-            re.append('[?^{' + str(self.lenrange[0]) + ',' + str(self.lenrange[1]) + '}]')
-        if len(self.prefixset) > 0:
-            re.append('[[' + '|'.join(map(explode, self.prefixset)) + '] ?*]')
-        if len(re) == 0:
-            return u'?+'
-        else:
-            return ' & '.join(re)
-    
+
     def pyregex(self):
         # ^(?=.*suffix$)(?=.{min,max}$)prefix
         re = u''
@@ -122,6 +86,4 @@ class genregex:
             return '^' + re
     
     def _significancetest(self, num: int, uniq: int):
-        if (1.0-(1.0/(uniq+1.0))) ** num <= self.pvalue:
-            return True
-        return False
+        return (1.0-(1.0/(uniq+1.0))) ** num <= self.pvalue
