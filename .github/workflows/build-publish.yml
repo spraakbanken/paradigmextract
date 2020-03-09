@@ -1,0 +1,63 @@
+name: Build & Publish
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - v.*
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: [3.6, 3.7, 3.8]
+    steps:
+      - uses: actions/checkout@v1
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          make install-dev
+      # - name: Lint with flake8 for syntax errors
+      #   run: make lint-syntax-errors
+      - name: Test with pytest
+        run: make test
+      # - name: Coveralls
+      #   uses: coverallsapp/github-action@master
+      #   with:
+      #     github-token: ${{ secrets.github_token }}
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Set up Python 3.6
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.6
+      - name: Build distribution
+        run: |
+          pip install --upgrade setuptools twine wheel pbr
+          python setup.py sdist bdist_wheel
+          echo "github.ref = ${{ github.ref }}"
+      - name: Check distributions
+        run: twine check dist/*
+      - name: Publish package to TestPyPI
+        uses: pypa/gh-action-pypi-publish@master
+        if: github.repository == 'spraakbanken/paradigmextract' && !startsWith(github.ref, 'refs/tags/')
+        with:
+          user: __token__
+          password: ${{ secrets.test_pypi_password }}
+          repository_url: https://test.pypi.org/legacy/
+      - name: Publish package to PyPI
+        uses: pypa/gh-action-pypi-publish@master
+        if: github.repository == 'spraakbanken/paradigmextract' && startsWith(github.ref, 'refs/tags/')
+        with:
+          user: __token__
+          password: ${{ secrets.pypi_password }}
