@@ -1,14 +1,10 @@
-# -*- coding: utf-8 -*-
-
-import codecs
 from collections import defaultdict
 import paradigmextract.genregex as genregex
-import json
 import logging
 import re
 import paradigmextract.regexmatcher as regexmatcher
 
-from typing import List, Dict, Tuple, Optional, Any
+from typing import List, Tuple, Optional, Any
 
 
 class Paradigm:
@@ -22,91 +18,47 @@ class Paradigm:
     """
 
     def __init__(self, form_msds: List[Tuple[str, Any]], var_insts: List[List[Tuple[str, Any]]], p_id: str = '',
-                 small: bool = False, pos: str = '',
-                 lex: str = '', uuid: str = '', classes={}) -> None:
-        # def __init__(self, paradigm):
-        # prefix: just for naming, exclude since we have p_id?
-        # def __init__(self, form_msds, var_insts, prefix=None, p_id=None):
-        logging.debug('make paradigm %s %s in lexicon %s' % (p_id, uuid, lex))
-        self.p_info = {}
-        self.small = small
-        self.classes = classes
+                 pos: str = '', uuid: str = '') -> None:
+        logging.debug('make paradigm %s %s' % (p_id, uuid))
+        self._p_info = {}
         self.forms = []
         self.pos = pos
-        self.lex = lex
         self.uuid = uuid
-        if small:
-            self.var_insts = []
-        else:
-            self.var_insts = var_insts
+        self.var_insts = var_insts
         self.p_id = p_id
 
         for (f, msd) in form_msds:
             self.forms.append(Form(f, msd, var_insts))
 
-    def set_id(self, p_id: str) -> None:
-        self.p_id = p_id
-
-    def set_uuid(self, uuid: str) -> None:
-        self.uuid = uuid
-
-    # This one is probably broken, should be extend, not append?
-    def add_var_insts(self, var_inst: List[Tuple[Any, Any]]) -> None:
-        self.var_insts.append([(str(key), val) for key, val in var_inst])
-
-    def set_pos(self, pos: str) -> None:
-        self.pos = pos
-
-    def set_lexicon(self, lexicon: str) -> None:
-        self.lex = lexicon
-
-    def shrink(self) -> None:
-        self.var_insts = []
-        self.members = []
-        self.small = True
-
-    def empty_classes(self) -> None:
-        self.classes = {}
-
-    def add_class(self, name, members) -> None:
-        if name not in self.classes:
-            print('classname', name)
-            print('classse', self.classes)
-            self.classes[name] = set()
-        # print('add class', name, members)
-        self.classes[name].update(members)
-        # print('added class', self.classes)
-
     def __getattr__(self, attr):
-        # TODO Will mflbackend need to recompute this when updating paradigms?
-        if len(self.p_info) > 0:  # Compute only once.
-            return self.p_info[attr]
+        """
+        Caches information about paradigm
+        Stuff gets weird when the paradigm has no members, should naming of a paradigm really be done here?
+        """
+        if len(self._p_info) > 0:
+            return self._p_info[attr]
         else:
             if self.p_id:
-                self.p_info['name'] = self.p_id
+                self._p_info['name'] = self.p_id
             if len(self.var_insts) != 0:
-                # TODO naming strategy: how to name paradigms?
                 if not self.p_id:
-                    self.p_info['name'] = 'p_%s' % self.__call__(*[s for (_, s) in self.var_insts[0][1:]])[0][0]
-                self.p_info['count'] = len(self.var_insts)
-                self.p_info['members'] = [var[0][1] for var in self.var_insts]
-            else:  # no variables
-                # TODO naming strategy: name might get weird without var_insts
+                    self._p_info['name'] = 'p_%s' % self.__call__(*[s for (_, s) in self.var_insts[0][1:]])[0][0]
+                self._p_info['count'] = len(self.var_insts)
+                self._p_info['members'] = [var[0][1] for var in self.var_insts]
+            else:
                 if not self.p_id:
-                    self.p_info['name'] = 'p_%s' % self.__call__()[0][0]
-                self.p_info['members'] = []
-                # TODO changed from 1 to 0, since empty paradigms should not pretend to have members
-                # May cause errors when calculating score
-                self.p_info['count'] = 0
-            self.p_info['slots'] = self.__slots()
-        return self.p_info[attr]
+                    self._p_info['name'] = 'p_%s' % self.__call__()[0][0]
+                self._p_info['members'] = []
+                self._p_info['count'] = 0
+            self._p_info['slots'] = self.__slots()
+        return self._p_info[attr]
 
     def __slots(self) -> List[Tuple[bool, Any]]:
         slts = []
         """Compute the content of the slots.
         """
         # string slots
-        fs = [f.strs() for f in self.forms if not f.identifier]
+        fs = [f.strs() for f in self.forms]
         str_slots = list(zip(*fs))
         # var slots
         vt = defaultdict(list)
@@ -126,9 +78,8 @@ class Paradigm:
         return slts
 
     def fits_paradigm(self, w: str, tag: str = '', constrained: bool = True, baseform: bool = False) -> bool:
-        # TODO will this make word fail if you provide all forms+identifier?
         for f in self.forms:
-            if f.match(w, tag=tag, constrained=constrained) and not f.identifier:
+            if f.match(w, tag=tag, constrained=constrained):
                 return True
             if baseform:
                 break
@@ -142,22 +93,13 @@ class Paradigm:
         elif baseform:
             forms = self.forms[:1]
         else:
-            forms = [f for f in self.forms if not f.identifier]
+            forms = self.forms
         if tag:
             forms = [f for f in forms if f.msd == tag]
         for f in forms:
-            # print('forms to evaluate', f.form, f.msd, 'to', w)
             xs = f.match_vars(w, constrained)
-            # print('vars', xs)
             result.append(xs)
         return result
-
-    def paradigm_forms(self) -> List[Dict[str, Any]]:
-        if len(self.var_insts) > 0:
-            ss = [s for (_, s) in self.var_insts[0]]
-        else:
-            ss = []
-        return [f.shapes(ss) for f in self.forms]
 
     def __call__(self, *insts):
         table = []
@@ -165,35 +107,6 @@ class Paradigm:
             (w, msd) = f(*insts)
             table.append((''.join(w), msd))
         return table
-
-    # function for construction paradigm lmf-json objects
-    def jsonify(self):
-        paradigm = {
-            # If used with Karp: lexiconName is needed
-            '_lexiconName': self.lex,
-            'lexiconName': self.lex,
-            '_partOfSpeech': self.pos,
-            '_entries': len(self.members),
-            '_uuid': self.uuid,
-            'MorphologicalPatternID': self.name,
-            'VariableInstances': []
-        }
-        for var_inst in self.var_insts:
-            paradigm['VariableInstances'].append({})
-            for v, i in var_inst:
-                if v in ["0", 0]:
-                    v = "first-attest"
-                paradigm['VariableInstances'][-1][v] = i
-
-        paradigm['TransformCategory'] = {}
-        for key, mem in self.classes.items():
-            paradigm['TransformCategory'][key] = list(mem)
-
-        paradigm["TransformSet"] = [form.jsonify() for form in self.forms if not form.identifier]
-        return paradigm
-
-    def pattern(self):
-        return "#".join([f.__str__() for f in self.forms])
 
     def __str__(self):
         p = "#".join([f.__str__() for f in self.forms])
@@ -217,7 +130,7 @@ class Form:
     def __init__(self, form: str, msd=(), v_insts: List[List[Tuple[str, Any]]] = ()):
         (self.form, self.msd) = (form.split('+'), msd)
         self.scount = 0
-        self.identifier = len(msd) > 0 and len(msd[0]) > 0 and msd[0][1] == "identifier"
+        # self.identifier = len(msd) > 0 and len(msd[0]) > 1 and msd[0][1] == "identifier"
         r = ''
         for f in self.form:
             if f.isdigit():
@@ -235,19 +148,10 @@ class Form:
         self.v_regex = []
         for (_, ss) in collect_vars.items():
             try:
-                self.v_regex.append(re.compile(genregex.genregex(ss, pvalue=0.05).pyregex()))
+                self.v_regex.append(re.compile(genregex.Genregex(ss, pvalue=0.05).pyregex()))
             except:
                 logging.error('error reading %s!' % ss)
                 raise
-
-    def shapes(self, ss) -> Dict[str, Any]:
-        w = "".join(self.__call__(*ss)[0])
-        return {'form': "+".join(self.form),
-                'msd': self.msd,
-                'w': w,
-                'regex': self.regex,
-                'cregex': self.cregex,
-                'v_regex': self.v_regex}
 
     def __call__(self, *insts):
         """Instantiate the variables of the wordform.
@@ -265,13 +169,12 @@ class Form:
         return w, self.msd
 
     def match(self, w: str, tag: str = '', constrained: bool = True) -> bool:
-        # print('compare', w, tag, 'to', self.msd)
         if tag and self.msd != tag:
             return False
         return self.match_vars(w, constrained) is not None
 
     def match_vars(self, w: str, constrained: bool = True) -> Optional[List[Tuple[int, Any]]]:
-        matcher = regexmatcher.mregex(self.regex)
+        matcher = regexmatcher.MRegex(self.regex)
         ms = matcher.findall(w)
         if ms is None:
             return None
@@ -322,35 +225,6 @@ class Form:
             ss.append('_')
         return ss
 
-    def jsonify(self) -> Dict[str, Any]:
-        gram = {}
-        process = []
-        for (t, v) in self.msd:
-            if t is not None:
-                if v is not None:
-                    gram[t] = v
-                else:
-                    gram[t] = ''
-            else:
-                if v is not None:
-                    gram['msd'] = 'v'
-        for part in self.form:
-            if part.isdigit():
-                pr = {
-                    "operator": "addAfter",
-                    "processType": "pextractAddVariable",
-                    "variableNum": part
-                }
-                process.append(pr)
-            else:
-                pr = {
-                    "operator": "addAfter",
-                    "processType": "pextractAddConstant",
-                    "stringValue": part
-                }
-                process.append(pr)
-        return {"Process": process, "GrammaticalFeatures": gram}
-
     def __str__(self) -> str:
         ms = []
         for (t, v) in self.msd:
@@ -366,78 +240,3 @@ class Form:
             return "+".join(self.form)
         else:
             return "%s::%s" % ("+".join(self.form), ",,".join(ms))
-
-
-def load_p_file(file: str, pos: str = '', lex: str = '') -> List[Paradigm]:
-    paradigms = []
-    line_no = 1
-    with codecs.open(file, encoding='utf-8') as f:
-        try:
-            for l in f:
-                try:
-                    (p, ex) = l.strip().split('\t')
-                except:
-                    p = l.strip()
-                    ex = ''
-                p_members = []
-                wfs = []
-                for s in p.split('#'):
-                    (w, m) = s.split('::')
-                    msd = [tuple(x.split('=')) for x in m.split(',,')]
-                    wfs.append((w, msd))
-                if len(ex) > 0:
-                    for s in ex.split('#'):
-                        mem = []
-                        for vbind in s.split(',,'):
-                            mem.append(tuple(vbind.split('=')))
-                        p_members.append(mem)
-                else:  # no variables
-                    p_members = []
-                paradigms.append((len(p_members), wfs, p_members))
-                line_no += 1
-        except:
-            logging.error('Error on line %s' % line_no)
-            raise
-    paradigms.sort(reverse=True)
-    return [Paradigm(wfs, p_members, 'p%d_%s' % (i, p_members[0][0][1]), pos=pos, lex=lex)
-            for (i, (_, wfs, p_members)) in enumerate(paradigms, 1)]
-
-
-def load_json_file(file: str, lex: str = '', pos: str = '') -> List[Paradigm]:
-    try:
-        return load_json(json.load(codecs.open(file, encoding='utf-8')), lex=lex, pos=pos)
-    except Exception as e:
-        logging.error('Could not read json file %s' % e)
-        raise
-
-
-def load_json(objs: List[Dict[str, Any]], lex: str = '', pos: str = '') -> List[Paradigm]:
-    paradigms = []
-    obj_no = 1
-    try:
-        for paradigm in objs:
-            var_insts = [list(inst.items()) for inst in paradigm.get('VariableInstances', [])]
-            p_id = paradigm.get('MorphologicalPatternID', '')
-            uuid = paradigm.get('_uuid', '')
-            form_msd = []
-
-            classes = dict([(key, set(val)) for key, val in paradigm.get('TransformCategory', {}).items()])
-
-            for transform in paradigm.get("TransformSet", []):
-                f = []
-                for p in transform.get("Process", []):
-                    # TODO check processType? and operator?
-                    if p.get('processType', '') == "pextractAddVariable":
-                        f.append(p['variableNum'])
-                    if p.get('processType', '') == "pextractAddConstant":
-                        f.append(p['stringValue'])
-                msd = list(transform.get('GrammaticalFeatures').items())
-                form_msd.append(('+'.join(f), msd))
-            paradigms.append((form_msd, var_insts, p_id, uuid))
-            obj_no += 1
-    except Exception as e:
-        logging.error('Error on object %d:\n %s' % (obj_no, e))
-        raise
-    paradigms.sort(reverse=True)
-    return [Paradigm(wfs, p_members, p_id, uuid=uuid, lex=lex, pos=pos, classes=classes)
-            for (wfs, p_members, p_id, uuid) in paradigms]
