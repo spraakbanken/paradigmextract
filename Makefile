@@ -1,3 +1,5 @@
+.PHONY: test
+
 PYTHONPATH=$PYTHONPATH:./src
 exp:
 	cd src; python mexp.py de > ../output/de_morph.txt

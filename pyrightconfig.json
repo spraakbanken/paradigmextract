@@ -1,0 +1,3 @@
+{
+    "include": ["src/paradigmextract", "tests", "bin"]
+}
