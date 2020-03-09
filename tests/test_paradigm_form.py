@@ -12,4 +12,4 @@ def test_constructor_single_msd():
     msd = [("vb",)]
     form = Form("", msd)
 
-    assert not form.identifier
+    assert form.msd == [("vb",)]
