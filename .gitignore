@@ -1,0 +1,17 @@
+## Python objects
+*.pyc
+__pycache__/
+
+## Virtual environments
+.venv/
+
+## Test files
+.pytest_cache/
+
+## Python packages
+.eggs/
+*.egg-info/
+
+## Editor configs
+.vscode/
+

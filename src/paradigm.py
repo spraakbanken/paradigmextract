@@ -30,12 +30,21 @@ class Paradigm:
             Ex: [[('1','dimm')],[('1','dank')], ...]
     """
 
-    def __init__(self, form_msds, var_insts, p_id='', small=False, pos='',
-                 lex='', uuid='', classes={}):
+    def __init__(
+        self,
+        form_msds,
+        var_insts,
+        p_id="",
+        small=False,
+        pos="",
+        lex="",
+        uuid="",
+        classes={},
+    ):
         # def __init__(self, paradigm):
         # prefix: just for naming, exclude since we have p_id?
         # def __init__(self, form_msds, var_insts, prefix=None, p_id=None):
-        logging.debug('make paradigm %s %s in lexicon %s' % (p_id, uuid, lex))
+        logging.debug("make paradigm %s %s in lexicon %s" % (p_id, uuid, lex))
         self.p_info = {}
         self.small = small
         self.classes = classes
@@ -77,8 +86,8 @@ class Paradigm:
 
     def add_class(self, name, members):
         if name not in self.classes:
-            print('classname', name)
-            print('classse', self.classes)
+            print("classname", name)
+            print("classse", self.classes)
             self.classes[name] = set()
         # print('add class', name, members)
         self.classes[name].update(members)
@@ -90,22 +99,25 @@ class Paradigm:
             return self.p_info[attr]
         else:
             if self.p_id:
-                self.p_info['name'] = self.p_id
+                self.p_info["name"] = self.p_id
             if len(self.var_insts) != 0:
                 # TODO naming strategy: how to name paradigms?
                 if not self.p_id:
-                    self.p_info['name'] = 'p_%s' % self.__call__(*[s for (_, s) in self.var_insts[0][1:]])[0][0]
-                self.p_info['count'] = len(self.var_insts)
-                self.p_info['members'] = [var[0][1] for var in self.var_insts]
+                    self.p_info["name"] = (
+                        "p_%s"
+                        % self.__call__(*[s for (_, s) in self.var_insts[0][1:]])[0][0]
+                    )
+                self.p_info["count"] = len(self.var_insts)
+                self.p_info["members"] = [var[0][1] for var in self.var_insts]
             else:  # no variables
                 # TODO naming strategy: name might get weird without var_insts
                 if not self.p_id:
-                    self.p_info['name'] = 'p_%s' % self.__call__()[0][0]
-                self.p_info['members'] = []
+                    self.p_info["name"] = "p_%s" % self.__call__()[0][0]
+                self.p_info["members"] = []
                 # TODO changed from 1 to 0, since empty paradigms should not pretend to have members
                 # May cause errors when calculating score
-                self.p_info['count'] = 0
-            self.p_info['slots'] = self.__slots()
+                self.p_info["count"] = 0
+            self.p_info["slots"] = self.__slots()
         return self.p_info[attr]
 
     def __slots(self):
@@ -123,16 +135,18 @@ class Paradigm:
         var_slots = list(vt.items())
         var_slots.sort(key=lambda x: x[0])
         (s_index, v_index) = (0, 0)
-        for i in range(len(str_slots) + len(var_slots)):  # interleave strings and variables
+        for i in range(
+            len(str_slots) + len(var_slots)
+        ):  # interleave strings and variables
             if i % 2 == 0:
-                    slts.append((False, str_slots[s_index]))
-                    s_index += 1
+                slts.append((False, str_slots[s_index]))
+                s_index += 1
             elif var_slots:  # handle empty paradigms
                 slts.append((True, var_slots[v_index][1]))
                 v_index += 1
         return slts
 
-    def fits_paradigm(self, w, tag='', constrained=True, baseform=False):
+    def fits_paradigm(self, w, tag="", constrained=True, baseform=False):
         # TODO will this make word fail if you provide all forms+identifier?
         for f in self.forms:
             if f.match(w, tag=tag, constrained=constrained) and not f.identifier:
@@ -141,7 +155,7 @@ class Paradigm:
                 break
         return False
 
-    def match(self, w, selection=None, constrained=True, tag='', baseform=False):
+    def match(self, w, selection=None, constrained=True, tag="", baseform=False):
         result = []
         if selection is not None:
             forms = [self.forms[i] for i in selection]
@@ -169,32 +183,34 @@ class Paradigm:
         table = []
         for f in self.forms:
             (w, msd) = f(*insts)
-            table.append((''.join(w), msd))
+            table.append(("".join(w), msd))
         return table
 
     # function for construction paradigm lmf-json objects
     def jsonify(self):
         paradigm = {}
-        paradigm['_lexiconName'] = self.lex
+        paradigm["_lexiconName"] = self.lex
         # If used with Karp: lexiconName is needed
-        paradigm['lexiconName'] = self.lex
-        paradigm['_partOfSpeech'] = self.pos
-        paradigm['_entries'] = len(self.members)
-        paradigm['_uuid'] = self.uuid
-        paradigm['MorphologicalPatternID'] = self.name
-        paradigm['VariableInstances'] = []
+        paradigm["lexiconName"] = self.lex
+        paradigm["_partOfSpeech"] = self.pos
+        paradigm["_entries"] = len(self.members)
+        paradigm["_uuid"] = self.uuid
+        paradigm["MorphologicalPatternID"] = self.name
+        paradigm["VariableInstances"] = []
         for var_inst in self.var_insts:
-            paradigm['VariableInstances'].append({})
+            paradigm["VariableInstances"].append({})
             for v, i in var_inst:
                 if v in ["0", 0]:
                     v = "first-attest"
-                paradigm['VariableInstances'][-1][v] = i
+                paradigm["VariableInstances"][-1][v] = i
 
-        paradigm['TransformCategory'] = {}
+        paradigm["TransformCategory"] = {}
         for key, mem in self.classes.items():
-            paradigm['TransformCategory'][key] = list(mem)
+            paradigm["TransformCategory"][key] = list(mem)
 
-        paradigm["TransformSet"] = [form.jsonify() for form in self.forms if not form.identifier]
+        paradigm["TransformSet"] = [
+            form.jsonify() for form in self.forms if not form.identifier
+        ]
         return paradigm
 
     def pattern(self):
@@ -202,8 +218,8 @@ class Paradigm:
 
     def __str__(self):
         p = "#".join([f.__str__() for f in self.forms])
-        v = "#".join([",,".join(['%s=%s' % v for v in vs]) for vs in self.var_insts])
-        return '%s\t%s' % (p, v)
+        v = "#".join([",,".join(["%s=%s" % v for v in vs]) for vs in self.var_insts])
+        return "%s\t%s" % (p, v)
 
 
 class Form:
@@ -218,14 +234,15 @@ class Form:
                 [] no msd available
                 [(None,'SGNOM')] no msd type available
     """
+
     def __init__(self, form, msd=[], v_insts=[]):
-        (self.form, self.msd) = (form.split('+'), msd)
+        (self.form, self.msd) = (form.split("+"), msd)
         self.scount = 0
-        self.identifier = len(msd) > 0 and len(msd[0]) > 0 and msd[0][1] == "identifier"
-        r = ''
+        self.identifier = len(msd) > 0 and len(msd[0]) > 1 and msd[0][1] == "identifier"
+        r = ""
         for f in self.form:
             if f.isdigit():
-                r += '(.+)'
+                r += "(.+)"
             else:
                 r += f
                 self.scount += len(f)
@@ -239,19 +256,23 @@ class Form:
         self.v_regex = []
         for (_, ss) in collect_vars.items():
             try:
-                self.v_regex.append(re.compile(genregex.genregex(ss, pvalue=0.05).pyregex()))
+                self.v_regex.append(
+                    re.compile(genregex.genregex(ss, pvalue=0.05).pyregex())
+                )
             except:
-                logging.error('error reading %s!' % ss)
+                logging.error("error reading %s!" % ss)
                 raise
 
     def shapes(self, ss):
         w = "".join(self.__call__(*ss)[0])
-        return {'form': "+".join(self.form),
-                'msd': self.msd,
-                'w': w,
-                'regex': self.regex,
-                'cregex': self.cregex,
-                'v_regex': self.v_regex}
+        return {
+            "form": "+".join(self.form),
+            "msd": self.msd,
+            "w": w,
+            "regex": self.regex,
+            "cregex": self.cregex,
+            "v_regex": self.v_regex,
+        }
 
     def __call__(self, *insts):
         """Instantiate the variables of the wordform.
@@ -268,7 +289,7 @@ class Form:
                 w.append(p)
         return (w, self.msd)
 
-    def match(self, w, tag='', constrained=True):
+    def match(self, w, tag="", constrained=True):
         # print('compare', w, tag, 'to', self.msd)
         if tag and self.msd != tag:
             return False
@@ -295,16 +316,18 @@ class Form:
                 for (s, r) in var_and_reg:
                     m = r.match(s)
                     if m is None:
-                            return None
+                        return None
                     xs = m.groups()  # .+-matches have no grouping
-                    if len(xs) > 0 or r.pattern == '.+':
-                        if r.pattern != '.+':
-                            vcount += len("".join(xs))  # select the variable specificity
+                    if len(xs) > 0 or r.pattern == ".+":
+                        if r.pattern != ".+":
+                            vcount += len(
+                                "".join(xs)
+                            )  # select the variable specificity
                     else:
                         m_all = False
                         break
                 if m_all:
-                    result.append((self.scount+vcount, vs))
+                    result.append((self.scount + vcount, vs))
             if result == []:
                 return None
             else:
@@ -316,14 +339,14 @@ class Form:
         """
         ss = []
         if self.form[0].isdigit():
-            ss.append('_')
+            ss.append("_")
         for i in range(len(self.form)):
-            if not(self.form[i].isdigit()):
+            if not (self.form[i].isdigit()):
                 ss.append(self.form[i])
-            elif i < len(self.form)-1 and self.form[i+1].isdigit():
-                ss.append('_')
+            elif i < len(self.form) - 1 and self.form[i + 1].isdigit():
+                ss.append("_")
         if self.form[-1].isdigit():
-            ss.append('_')
+            ss.append("_")
         return ss
 
     def jsonify(self):
@@ -334,24 +357,24 @@ class Form:
                 if v is not None:
                     gram[t] = v
                 else:
-                    gram[t] = ''
+                    gram[t] = ""
             else:
                 if v is not None:
-                    gram['msd'] = 'v'
+                    gram["msd"] = "v"
         for part in self.form:
             if part.isdigit():
                 pr = {
                     "operator": "addAfter",
                     "processType": "pextractAddVariable",
-                    "variableNum": part
-                    }
+                    "variableNum": part,
+                }
                 process.append(pr)
             else:
                 pr = {
                     "operator": "addAfter",
                     "processType": "pextractAddConstant",
-                    "stringValue": part
-                    }
+                    "stringValue": part,
+                }
                 process.append(pr)
         return {"Process": process, "GrammaticalFeatures": gram}
 
@@ -360,7 +383,7 @@ class Form:
         for (t, v) in self.msd:
             if t is not None:
                 if v is not None:
-                    ms.append('%s=%s' % (t, v))
+                    ms.append("%s=%s" % (t, v))
                 else:
                     ms.append(t)
             else:
@@ -372,117 +395,131 @@ class Form:
             return "%s::%s" % ("+".join(self.form), ",,".join(ms))
 
 
-def load_p_file(file, pos='', lex=''):
+def load_p_file(file, pos="", lex=""):
     paradigms = []
     line_no = 1
-    with codecs.open(file, encoding='utf-8') as f:
+    with codecs.open(file, encoding="utf-8") as f:
         try:
             for l in f:
                 try:
-                    (p, ex) = l.strip().split('\t')
+                    (p, ex) = l.strip().split("\t")
                 except:
                     p = l.strip()
-                    ex = ''
+                    ex = ""
                 p_members = []
                 wfs = []
-                for s in p.split('#'):
-                    (w, m) = s.split('::')
-                    msd = [tuple(x.split('=')) for x in m.split(',,')]
+                for s in p.split("#"):
+                    (w, m) = s.split("::")
+                    msd = [tuple(x.split("=")) for x in m.split(",,")]
                     wfs.append((w, msd))
                 if len(ex) > 0:
-                    for s in ex.split('#'):
+                    for s in ex.split("#"):
                         mem = []
-                        for vbind in s.split(',,'):
-                            mem.append(tuple(vbind.split('=')))
+                        for vbind in s.split(",,"):
+                            mem.append(tuple(vbind.split("=")))
                         p_members.append(mem)
                 else:  # no variables
                     p_members = []
                 paradigms.append((len(p_members), wfs, p_members))
                 line_no += 1
         except:
-            logging.error('Error on line %s' % line_no)
+            logging.error("Error on line %s" % line_no)
             raise
     paradigms.sort(reverse=True)
-    return [Paradigm(wfs, p_members, 'p%d_%s' % (i, p_members[0][0][1]), pos=pos, lex=lex)
-            for (i, (_, wfs, p_members)) in enumerate(paradigms, 1)]
+    return [
+        Paradigm(wfs, p_members, "p%d_%s" % (i, p_members[0][0][1]), pos=pos, lex=lex)
+        for (i, (_, wfs, p_members)) in enumerate(paradigms, 1)
+    ]
 
 
-def load_json_file(file, lex='', pos=''):
+def load_json_file(file, lex="", pos=""):
     try:
-        return load_json(json.load(codecs.open(file, encoding='utf-8')), lex=lex, pos=pos)
+        return load_json(
+            json.load(codecs.open(file, encoding="utf-8")), lex=lex, pos=pos
+        )
     except Exception as e:
-        logging.error('Could not read json file %s' % (e))
+        logging.error("Could not read json file %s" % (e))
         raise
 
 
-def load_json(objs, lex='', pos=''):
+def load_json(objs, lex="", pos=""):
     paradigms = []
     obj_no = 1
     try:
         for paradigm in objs:
-            var_insts = [list(inst.items()) for inst in paradigm.get('VariableInstances', [])]
-            p_id = paradigm.get('MorphologicalPatternID', '')
-            uuid = paradigm.get('_uuid', '')
+            var_insts = [
+                list(inst.items()) for inst in paradigm.get("VariableInstances", [])
+            ]
+            p_id = paradigm.get("MorphologicalPatternID", "")
+            uuid = paradigm.get("_uuid", "")
             form_msd = []
 
-            classes = dict([(key, set(val)) for key, val in paradigm.get('TransformCategory', {}).items()])
+            classes = dict(
+                [
+                    (key, set(val))
+                    for key, val in paradigm.get("TransformCategory", {}).items()
+                ]
+            )
 
             for transform in paradigm.get("TransformSet", []):
                 f = []
                 for p in transform.get("Process", []):
                     # TODO check processType? and operator?
-                    if p.get('processType', '') == "pextractAddVariable":
-                        f.append(p['variableNum'])
-                    if p.get('processType', '') == "pextractAddConstant":
-                        f.append(p['stringValue'])
-                msd = list(transform.get('GrammaticalFeatures').items())
-                form_msd.append(('+'.join(f), msd))
+                    if p.get("processType", "") == "pextractAddVariable":
+                        f.append(p["variableNum"])
+                    if p.get("processType", "") == "pextractAddConstant":
+                        f.append(p["stringValue"])
+                msd = list(transform.get("GrammaticalFeatures").items())
+                form_msd.append(("+".join(f), msd))
             paradigms.append((form_msd, var_insts, p_id, uuid))
             obj_no += 1
     except Exception as e:
-        logging.error('Error on object %d:\n %s' % (obj_no, e))
+        logging.error("Error on object %d:\n %s" % (obj_no, e))
         raise
     paradigms.sort(reverse=True)
-    return [Paradigm(wfs, p_members, p_id, uuid=uuid, lex=lex, pos=pos, classes=classes)
-            for (wfs, p_members, p_id, uuid) in paradigms]
+    return [
+        Paradigm(wfs, p_members, p_id, uuid=uuid, lex=lex, pos=pos, classes=classes)
+        for (wfs, p_members, p_id, uuid) in paradigms
+    ]
 
 
 def pr(i, b):
     if b:
-        return '[v] %d' % (i)
+        return "[v] %d" % (i)
     else:
-        return '[s] %d' % (i)
+        return "[s] %d" % (i)
 
 
-if __name__ == '__main__':
-    if '-p' in sys.argv:
+if __name__ == "__main__":
+    if "-p" in sys.argv:
         for p in load_p_file(sys.argv[-1]):
-            print('name: %s, count: %d' % (p.name, p.count))
-            print('members: %s' % (", ".join(p.members)))
+            print("name: %s, count: %d" % (p.name, p.count))
+            print("members: %s" % (", ".join(p.members)))
             for f in p.forms:
-                print(str(f).replace('::', '\t'))
+                print(str(f).replace("::", "\t"))
             print()
             print(p)
-    elif '-j' in sys.argv:
+    elif "-j" in sys.argv:
         for p in load_json_file(sys.argv[-1]):
-            print('name: %s, count: %d' % (p.name, p.count))
-            print('members: %s' % (", ".join(p.members)))
+            print("name: %s, count: %d" % (p.name, p.count))
+            print("members: %s" % (", ".join(p.members)))
             for f in p.forms:
-                print(str(f).replace('::', '\t'))
+                print(str(f).replace("::", "\t"))
             print()
             print(p)
             print(p.jsonify())
-    elif '-s' in sys.argv:
+    elif "-s" in sys.argv:
         for p in load_p_file(sys.argv[-1]):
-            print('%s: %d' % (p.name, p.count))
+            print("%s: %d" % (p.name, p.count))
             # print the content of the slots
             for (i, (is_var, s)) in enumerate(p.slots):
-                print('%s: %s' % (pr(i, is_var), " ".join(s)))
+                print("%s: %s" % (pr(i, is_var), " ".join(s)))
             print()
-    elif '-t' in sys.argv:
+    elif "-t" in sys.argv:
         load_p_file(sys.argv[-1])
-    elif '-jt' in sys.argv:
+    elif "-jt" in sys.argv:
         load_json_file(sys.argv[-1])
 
     else:
-            print('Usage: <program> [-p|-s] <paradigm_file>')
+        print("Usage: <program> [-p|-s] <paradigm_file>")
+

@@ -1,11 +1,11 @@
 import functools
 import json
 import os
-from pextract import wordgraph
+from pextract import WordGraph
 
 
 def get_lcs(table):
-    wg = [wordgraph.wordtograph(x) for x in table]
+    wg = [WordGraph.from_string(x) for x in table]
     result = functools.reduce(lambda x, y: x & y, wg)
     return result.longestwords
 
@@ -30,23 +30,50 @@ def test2():
 
 
 def test3():
-    table = ['svälter ihjäl', 'svältes ihjäl', 'svälts ihjäl', 'svälte ihjäl', 'svältes ihjäl', 'svält ihjäl', 'svälta ihjäl',
-     'svältas ihjäl', 'svält ihjäl', 'svälts ihjäl', 'svältande ihjäl', 'svältandes ihjäl', 'svält ihjäl', 'ihjälsvält',
-     'svälts ihjäl', 'ihjälsvälts']
+    table = [
+        "svälter ihjäl",
+        "svältes ihjäl",
+        "svälts ihjäl",
+        "svälte ihjäl",
+        "svältes ihjäl",
+        "svält ihjäl",
+        "svälta ihjäl",
+        "svältas ihjäl",
+        "svält ihjäl",
+        "svälts ihjäl",
+        "svältande ihjäl",
+        "svältandes ihjäl",
+        "svält ihjäl",
+        "ihjälsvält",
+        "svälts ihjäl",
+        "ihjälsvälts",
+    ]
     lcs = get_lcs(table)
-    assert set(lcs) == {'svält', 'ihjäl'}
+    assert set(lcs) == {"svält", "ihjäl"}
 
 
 def test4():
-    table = ['gytter', 'gytters', 'gyttret', 'gyttrets', 'gytter-', 'gytter', 'gytter-', 'gytter', 'gytter-']
+    table = [
+        "gytter",
+        "gytters",
+        "gyttret",
+        "gyttrets",
+        "gytter-",
+        "gytter",
+        "gytter-",
+        "gytter",
+        "gytter-",
+    ]
     lcs = get_lcs(table)
-    assert set(lcs) == {'gytte', 'gyttr'}
+    assert set(lcs) == {"gytte", "gyttr"}
 
 
 def test_all():
-    join = os.path.join('/', *os.path.realpath(__file__).split('/')[:-2], 'testdata.json')
+    join = os.path.join(
+        "/", *os.path.realpath(__file__).split("/")[:-2], "testdata.json"
+    )
     with open(join) as fp:
         test_tables = json.load(fp)
         for table in test_tables:
-            lcs = get_lcs(table['wordforms'])
+            lcs = get_lcs(table["wordforms"])
             assert lcs is not None
