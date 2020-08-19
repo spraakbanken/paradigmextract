@@ -1,10 +1,10 @@
 import sys
+from typing import List
 
 import paradigmextract.pextract as pextract
 
 
-def split_tags(tags):
-    spl = [tg.split(u',,') for tg in tags]
+def split_tags(tags: List):
 
     newforms = []
     ctr = 1
