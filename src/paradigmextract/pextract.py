@@ -204,9 +204,9 @@ def _longest_variable(string: str) -> int:
 
 def _count_infix_segments(string):
     """Counts total number of infix segments, ignores @-strings."""
-    if u"[" not in string:
+    if "[" not in string:
         return 0
-    if u"@" in string:
+    if "@" in string:
         return 0
     nosuffix = re.sub("\][^\]]*$", "]", string)
     noprefix = re.sub("^[^\[]*\[", "[", nosuffix)
@@ -219,15 +219,15 @@ def _string_to_varstring(string, variables):
     s = []
     idx = 0
     while idx < len(string):
-        if string[idx] == u"[":
+        if string[idx] == "[":
             if idx != 0:
-                s.append(u"+")
+                s.append("+")
             idx += 1
-            while string[idx] != u"]":
+            while string[idx] != "]":
                 idx += len(variables[varpos])
                 s.append(str(varpos + 1))
                 if idx < len(string) - 1:
-                    s.append(u"+")
+                    s.append("+")
                 varpos += 1
             idx += 1
             continue
@@ -235,14 +235,14 @@ def _string_to_varstring(string, variables):
             s.append(string[idx])
             idx += 1
 
-    return u"".join(s)
+    return "".join(s)
 
 
 def _lcp(lst):
     """Returns the longest common prefix from a list."""
     if not lst:
         return ""
-    cleanlst = list(map(lambda x: x.replace(u"[", "").replace(u"]", ""), lst))
+    cleanlst = list(map(lambda x: x.replace("[", "").replace("]", ""), lst))
     s1 = min(cleanlst)
     s2 = max(cleanlst)
     for i, c in enumerate(s1):
@@ -265,9 +265,9 @@ def _evalfact(lcs, c):
         p = 0
         inside = 0
         for pos in w:
-            if pos == u"[":
+            if pos == "[":
                 inside = 1
-            elif pos == u"]":
+            elif pos == "]":
                 inside = 0
                 breaks[p - 1] = 1
             else:
@@ -283,12 +283,12 @@ def _evalfact(lcs, c):
 
     # Extract vars
     variables = []
-    currvar = u""
+    currvar = ""
     for idx, val in enumerate(lcs):
         currvar += lcs[idx]
         if finalbreaks[idx] == 1:
             variables.append(currvar)
-            currvar = u""
+            currvar = ""
 
     numvars = sum(finalbreaks)
     return numvars, variables
@@ -306,14 +306,14 @@ def _findfactors(word, lcs):
             return
         if posw != len(word) and posl == len(lcs):
             if inmatch:
-                rec(word, lcs, posw + 1, posl, 0, tempstring + [u"]"] + [word[posw]])
+                rec(word, lcs, posw + 1, posl, 0, tempstring + ["]"] + [word[posw]])
             else:
                 rec(word, lcs, posw + 1, posl, 0, tempstring + [word[posw]])
             return
 
         if posw == len(word) and posl == len(lcs):
             if inmatch:
-                factors.append("".join(tempstring + [u"]"]))
+                factors.append("".join(tempstring + ["]"]))
             else:
                 factors.append("".join(tempstring))
             return
@@ -322,12 +322,10 @@ def _findfactors(word, lcs):
             if inmatch:
                 rec(word, lcs, posw + 1, posl + 1, 1, tempstring + [word[posw]])
             else:
-                rec(
-                    word, lcs, posw + 1, posl + 1, 1, tempstring + [u"["] + [word[posw]]
-                )
+                rec(word, lcs, posw + 1, posl + 1, 1, tempstring + ["["] + [word[posw]])
 
         if inmatch:
-            rec(word, lcs, posw + 1, posl, 0, tempstring + [u"]"] + [word[posw]])
+            rec(word, lcs, posw + 1, posl, 0, tempstring + ["]"] + [word[posw]])
         else:
             rec(word, lcs, posw + 1, posl, 0, tempstring + [word[posw]])
 
