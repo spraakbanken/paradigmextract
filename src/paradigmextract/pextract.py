@@ -14,20 +14,35 @@ def learnparadigms(inflectiontables):
         result = functools.reduce(lambda x, y: x & y, wg)
         lcss = result.longestwords
         if not lcss:  # Table has no LCS - no variables
-            vartables.append((tablehead, taghead, [[table, table, table, [], 0, 0]], tagtable))
+            vartables.append(
+                (tablehead, taghead, [[table, table, table, [], 0, 0]], tagtable)
+            )
             continue
 
         combos = []
         for lcs in lcss:
             factorlist = [_findfactors(w, lcs) for w in table]
-            factorlist = _filterbracketings(factorlist, (_ffilter_lcp, _ffilter_shortest_string, _ffilter_shortest_infix,
-                                                         _ffilter_longest_single_var, _ffilter_leftmost_sum), table_limit)
+            factorlist = _filterbracketings(
+                factorlist,
+                (
+                    _ffilter_lcp,
+                    _ffilter_shortest_string,
+                    _ffilter_shortest_infix,
+                    _ffilter_longest_single_var,
+                    _ffilter_leftmost_sum,
+                ),
+                table_limit,
+            )
             combinations = itertools.product(*factorlist)
             for c in combinations:
                 (numvars, variablelist) = _evalfact(lcs, c)
-                infixcount = functools.reduce(lambda x, y: x + _count_infix_segments(y), c, 0)
+                infixcount = functools.reduce(
+                    lambda x, y: x + _count_infix_segments(y), c, 0
+                )
                 variabletable = [_string_to_varstring(s, variablelist) for s in c]
-                combos.append([table, c, variabletable, variablelist, numvars, infixcount])
+                combos.append(
+                    [table, c, variabletable, variablelist, numvars, infixcount]
+                )
 
         vartables.append((tablehead, taghead, combos, tagtable))
 
@@ -68,7 +83,9 @@ class WordGraph:
 
     def __init__(self, transitions):
         self.alphabet = {symbol for (state, symbol) in transitions}
-        self.states = {state for (state, symbol) in transitions} | set(transitions.values())
+        self.states = {state for (state, symbol) in transitions} | set(
+            transitions.values()
+        )
         self.transitions = transitions
         self.revtrans = {}
         for (state, sym) in self.transitions:
@@ -78,7 +95,7 @@ class WordGraph:
                 self.revtrans[self.transitions[(state, sym)]] = {(state, sym)}
 
     def __getattr__(self, attr):
-        if attr == 'longestwords':
+        if attr == "longestwords":
             self._maxpath()
             return self.longestwords
         raise AttributeError("%r object has no attribute %r" % (self.__class__, attr))
@@ -96,14 +113,19 @@ class WordGraph:
         while len(stack) > 0:
             (asource, bsource) = stack.pop()
             for sym in alphabet:
-                if (asource, sym) in self.transitions and (bsource, sym) in other.transitions:
+                if (asource, sym) in self.transitions and (
+                    bsource,
+                    sym,
+                ) in other.transitions:
                     atarget = self.transitions[(asource, sym)]
                     btarget = other.transitions[(bsource, sym)]
                     if (atarget, btarget) not in statemap:
                         statemap[(atarget, btarget)] = nextstate
                         nextstate += 1
                         stack.append((atarget, btarget))
-                    trans[(statemap[(asource, bsource)], sym)] = statemap[(atarget, btarget)]
+                    trans[(statemap[(asource, bsource)], sym)] = statemap[
+                        (atarget, btarget)
+                    ]
 
         return WordGraph(trans)
 
@@ -182,13 +204,13 @@ def _longest_variable(string: str) -> int:
 
 def _count_infix_segments(string):
     """Counts total number of infix segments, ignores @-strings."""
-    if u'[' not in string:
+    if u"[" not in string:
         return 0
-    if u'@' in string:
+    if u"@" in string:
         return 0
-    nosuffix = re.sub('\][^\]]*$', ']', string)
-    noprefix = re.sub('^[^\[]*\[', '[', nosuffix)
-    nobrackets = re.sub('\[[^\]]*\]', '', noprefix)
+    nosuffix = re.sub("\][^\]]*$", "]", string)
+    noprefix = re.sub("^[^\[]*\[", "[", nosuffix)
+    nobrackets = re.sub("\[[^\]]*\]", "", noprefix)
     return len(nobrackets)
 
 
@@ -197,15 +219,15 @@ def _string_to_varstring(string, variables):
     s = []
     idx = 0
     while idx < len(string):
-        if string[idx] == u'[':
+        if string[idx] == u"[":
             if idx != 0:
-                s.append(u'+')
+                s.append(u"+")
             idx += 1
-            while string[idx] != u']':
+            while string[idx] != u"]":
                 idx += len(variables[varpos])
                 s.append(str(varpos + 1))
                 if idx < len(string) - 1:
-                    s.append(u'+')
+                    s.append(u"+")
                 varpos += 1
             idx += 1
             continue
@@ -213,14 +235,14 @@ def _string_to_varstring(string, variables):
             s.append(string[idx])
             idx += 1
 
-    return u''.join(s)
+    return u"".join(s)
 
 
 def _lcp(lst):
     """Returns the longest common prefix from a list."""
     if not lst:
-        return ''
-    cleanlst = list(map(lambda x: x.replace(u'[', '').replace(u']', ''), lst))
+        return ""
+    cleanlst = list(map(lambda x: x.replace(u"[", "").replace(u"]", ""), lst))
     s1 = min(cleanlst)
     s2 = max(cleanlst)
     for i, c in enumerate(s1):
@@ -231,7 +253,7 @@ def _lcp(lst):
 
 def _firstvarmatch(string, prefix) -> bool:
     """See if first var is exactly prefix."""
-    return string[1:1 + len(prefix)] == prefix
+    return string[1 : 1 + len(prefix)] == prefix
 
 
 def _evalfact(lcs, c):
@@ -243,9 +265,9 @@ def _evalfact(lcs, c):
         p = 0
         inside = 0
         for pos in w:
-            if pos == u'[':
+            if pos == u"[":
                 inside = 1
-            elif pos == u']':
+            elif pos == u"]":
                 inside = 0
                 breaks[p - 1] = 1
             else:
@@ -261,12 +283,12 @@ def _evalfact(lcs, c):
 
     # Extract vars
     variables = []
-    currvar = u''
+    currvar = u""
     for idx, val in enumerate(lcs):
         currvar += lcs[idx]
         if finalbreaks[idx] == 1:
             variables.append(currvar)
-            currvar = u''
+            currvar = u""
 
     numvars = sum(finalbreaks)
     return numvars, variables
@@ -284,14 +306,14 @@ def _findfactors(word, lcs):
             return
         if posw != len(word) and posl == len(lcs):
             if inmatch:
-                rec(word, lcs, posw + 1, posl, 0, tempstring + [u']'] + [word[posw]])
+                rec(word, lcs, posw + 1, posl, 0, tempstring + [u"]"] + [word[posw]])
             else:
                 rec(word, lcs, posw + 1, posl, 0, tempstring + [word[posw]])
             return
 
         if posw == len(word) and posl == len(lcs):
             if inmatch:
-                factors.append("".join(tempstring + [u']']))
+                factors.append("".join(tempstring + [u"]"]))
             else:
                 factors.append("".join(tempstring))
             return
@@ -300,10 +322,12 @@ def _findfactors(word, lcs):
             if inmatch:
                 rec(word, lcs, posw + 1, posl + 1, 1, tempstring + [word[posw]])
             else:
-                rec(word, lcs, posw + 1, posl + 1, 1, tempstring + [u'['] + [word[posw]])
+                rec(
+                    word, lcs, posw + 1, posl + 1, 1, tempstring + [u"["] + [word[posw]]
+                )
 
         if inmatch:
-            rec(word, lcs, posw + 1, posl, 0, tempstring + [u']'] + [word[posw]])
+            rec(word, lcs, posw + 1, posl, 0, tempstring + [u"]"] + [word[posw]])
         else:
             rec(word, lcs, posw + 1, posl, 0, tempstring + [word[posw]])
 
@@ -359,23 +383,46 @@ def _ffilter_shortest_string(factorlist):
 
 def _ffilter_shortest_infix(factorlist):
     return [
-        [x for x in w if _count_infix_segments(x) == _count_infix_segments(min(w, key=lambda x: _count_infix_segments(x)))]
-        for w in factorlist]
+        [
+            x
+            for x in w
+            if _count_infix_segments(x)
+            == _count_infix_segments(min(w, key=lambda x: _count_infix_segments(x)))
+        ]
+        for w in factorlist
+    ]
 
 
 def _ffilter_longest_single_var(factorlist):
-    return [[x for x in w if _longest_variable(x) == _longest_variable(max(w, key=lambda x: _longest_variable(x)))] for w
-            in factorlist]
+    return [
+        [
+            x
+            for x in w
+            if _longest_variable(x)
+            == _longest_variable(max(w, key=lambda x: _longest_variable(x)))
+        ]
+        for w in factorlist
+    ]
 
 
 def _ffilter_leftmost_sum(factorlist):
-    return [[x for x in w if sum(i for i in range(len(x)) if x.startswith('[', i)) == min(
-        map(lambda x: sum(i for i in range(len(x)) if x.startswith('[', i)), w))] for w in factorlist]
+    return [
+        [
+            x
+            for x in w
+            if sum(i for i in range(len(x)) if x.startswith("[", i))
+            == min(
+                map(lambda x: sum(i for i in range(len(x)) if x.startswith("[", i)), w)
+            )
+        ]
+        for w in factorlist
+    ]
 
 
 def _filterbracketings(factorlist, functionlist, tablecap):
     def numcombinations(f):
         return functools.reduce(lambda x, y: x * len(y), f, 1)
+
     if numcombinations(factorlist) > tablecap:
         for filterfunc in functionlist:
             factorlist = filterfunc(factorlist)
