@@ -205,9 +205,9 @@ def _count_infix_segments(string):
         return 0
     if "@" in string:
         return 0
-    nosuffix = re.sub("\][^\]]*$", "]", string)
-    noprefix = re.sub("^[^\[]*\[", "[", nosuffix)
-    nobrackets = re.sub("\[[^\]]*\]", "", noprefix)
+    nosuffix = re.sub(r"\][^\]]*$", "]", string)
+    noprefix = re.sub(r"^[^\[]*\[", "[", nosuffix)
+    nobrackets = re.sub(r"\[[^\]]*\]", "", noprefix)
     return len(nobrackets)
 
 
