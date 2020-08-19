@@ -199,7 +199,7 @@ def _longest_variable(string: str) -> int:
     return maxlen
 
 
-def _count_infix_segments(string):
+def _count_infix_segments(string: str) -> int:
     """Counts total number of infix segments, ignores @-strings."""
     if "[" not in string:
         return 0
