@@ -155,6 +155,16 @@ class WordGraph:
 
 
 def _longest_variable(string: str) -> int:
+    """Computes the longest variable in the input.
+
+    Example: _longest_variable("test[a]") == 1
+
+    Args:
+        string (str): the string to analyze
+
+    Returns:
+        int: the length of the longest variable
+    """
     thislen = 0
     maxlen = 0
     inside = False
