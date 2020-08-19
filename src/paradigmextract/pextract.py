@@ -154,18 +154,18 @@ class WordGraph:
             self._backtrace(maxsources, maxlen, w, [])
 
 
-def _longest_variable(string):
+def _longest_variable(string: str) -> int:
     thislen = 0
     maxlen = 0
-    inside = 0
+    inside = False
     for s in string:
-        if inside and s != u']':
+        if inside and s != "]":
             thislen += 1
-        elif s == u']':
-            inside = 0
+        elif s == "]":
+            inside = False
             maxlen = max(thislen, maxlen)
-        elif s == u'[':
-            inside = 1
+        elif s == "[":
+            inside = True
             thislen = 0
     return maxlen
 
