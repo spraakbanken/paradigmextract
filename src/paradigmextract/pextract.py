@@ -52,9 +52,7 @@ def learnparadigms(inflectiontables):
         besttable = min(t, key=lambda s: (s[4], s[5]))
         filteredtables.append((idform, idtag, besttable, tags))
 
-    paradigmlist = _collapse_tables(filteredtables)
-
-    return paradigmlist
+    return _collapse_tables(filteredtables)
 
 
 class WordGraph:
@@ -70,8 +68,7 @@ class WordGraph:
             for j in range(i, len(word)):
                 if (i, word[j]) not in trans:
                     trans[(i, word[j])] = j + 1
-        grph = cls(trans)
-        return grph
+        return cls(trans)
 
     """Simple directed graph class where graphs are special types of automata
        where each state is a final state.
@@ -110,7 +107,7 @@ class WordGraph:
         statemap = {(0, 0): 0}
         nextstate = 1
         trans = {}
-        while len(stack) > 0:
+        while stack:
             (asource, bsource) = stack.pop()
             for sym in alphabet:
                 if (asource, sym) in self.transitions and (
@@ -156,7 +153,7 @@ class WordGraph:
             maxsources[i] = {}
 
         step = 1
-        while len(S) > 0:
+        while S:
             Snew = set()
             for state in S:
                 if state in tr:
