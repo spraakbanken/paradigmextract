@@ -65,7 +65,7 @@ class WordGraph:
     """
 
     @classmethod
-    def wordtograph(cls, word):
+    def from_string(cls, word: str):
         trans = {}
         for i in range(len(word)):
             for j in range(i, len(word)):
