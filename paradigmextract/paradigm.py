@@ -4,7 +4,7 @@ import re
 from paradigmextract import genregex
 from paradigmextract import regexmatcher
 
-from typing import List, Tuple, Optional, Any, Union, Dict, Sequence
+from typing import List, Set, Tuple, Optional, Any, Union, Dict, Sequence
 
 
 class Paradigm:
@@ -63,14 +63,13 @@ class Paradigm:
         return self._p_info[attr]
 
     def __slots(self) -> List[Tuple[bool, Any]]:
-        slts = []
-        """Compute the content of the slots.
-        """
+        """Compute the content of the slots."""
+        slts: List = []
         # string slots
-        fs = [f.strs() for f in self.forms]
-        str_slots = list(zip(*fs))
+        fs: List[List[str]] = [f.strs() for f in self.forms]
+        str_slots: List[Tuple[str, ...]] = list(zip(*fs))
         # var slots
-        vt = defaultdict(list)
+        vt: Dict[str, List[str]] = defaultdict(list)
         for vs in self.var_insts:
             for (v, s) in vs:
                 vt[v].append(s)
@@ -101,7 +100,7 @@ class Paradigm:
     def match(
         self,
         w: str,
-        selection=None,
+        selection: Sequence[int] = None,
         constrained: bool = True,
         tag: str = "",
         baseform: bool = False,
@@ -150,11 +149,11 @@ class Form:
         self,
         form: str,
         msd: Sequence[Tuple[Optional[str], str]] = (),
-        v_insts: Sequence[List[Tuple[str, Any]]] = ()
+        v_insts: Sequence[List[Tuple[str, Any]]] = (),
     ):
         self.form: List[str] = form.split("+")
         self.msd = msd
-        self.scount = 0
+        self.scount: int = 0
         # self.identifier = len(msd) > 0 and len(msd[0]) > 1 and msd[0][1] == "identifier"
         r = ""
         for f in self.form:
@@ -166,7 +165,7 @@ class Form:
         self.regex = r
         self.cregex = re.compile(self.regex)
         # vars
-        collect_vars = defaultdict(set)
+        collect_vars: Dict[str, Set[str]] = defaultdict(set)
         for vs in v_insts:
             for (i, v) in vs:
                 collect_vars[i].add(v)
@@ -182,9 +181,9 @@ class Form:
 
     def __call__(self, *insts):
         """Instantiate the variables of the wordform.
-           Args:
-            insts: fun args
-                   Ex: f('schr','i','b')
+        Args:
+         insts: fun args
+                Ex: f('schr','i','b')
         """
         (w, vindex) = ([], 0)
         for p in self.form:
@@ -242,7 +241,7 @@ class Form:
 
     def strs(self) -> List[str]:
         """Collects the strings in a wordform.
-           A variable is assumed to be surrounded by (possibly empty) strings.
+        A variable is assumed to be surrounded by (possibly empty) strings.
         """
         ss = []
         if self.form[0].isdigit():
