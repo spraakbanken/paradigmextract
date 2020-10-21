@@ -79,28 +79,28 @@ shared:
 	python src/convert_shared_data.py data/sigmorphon2016/data/turkish-task1-train N   > data/shared1_tr_noun_train.txt
 
 pshared:
-	python src/pextract.py < data/shared1_ar_verb_train.txt > paradigms/shared1_ar_verb_train.p 
-	python src/pextract.py < data/shared1_ar_noun_train.txt > paradigms/shared1_ar_noun_train.p 
-	python src/pextract.py < data/shared1_ar_adj_train.txt > paradigms/shared1_ar_adj_train.p 
+	python src/pextract.py < data/shared1_ar_verb_train.txt > paradigms/shared1_ar_verb_train.p
+	python src/pextract.py < data/shared1_ar_noun_train.txt > paradigms/shared1_ar_noun_train.p
+	python src/pextract.py < data/shared1_ar_adj_train.txt > paradigms/shared1_ar_adj_train.p
 
-	python src/pextract.py < data/shared1_ka_verb_train.txt > paradigms/shared1_ka_verb_train.p 
-	python src/pextract.py < data/shared1_ka_noun_train.txt > paradigms/shared1_ka_noun_train.p 
-	python src/pextract.py < data/shared1_ka_adj_train.txt > paradigms/shared1_ka_adj_train.p 
+	python src/pextract.py < data/shared1_ka_verb_train.txt > paradigms/shared1_ka_verb_train.p
+	python src/pextract.py < data/shared1_ka_noun_train.txt > paradigms/shared1_ka_noun_train.p
+	python src/pextract.py < data/shared1_ka_adj_train.txt > paradigms/shared1_ka_adj_train.p
 
-	python src/pextract.py < data/shared1_nv_verb_train.txt > paradigms/shared1_nv_verb_train.p 
-	python src/pextract.py < data/shared1_nv_noun_train.txt > paradigms/shared1_nv_noun_train.p 
+	python src/pextract.py < data/shared1_nv_verb_train.txt > paradigms/shared1_nv_verb_train.p
+	python src/pextract.py < data/shared1_nv_noun_train.txt > paradigms/shared1_nv_noun_train.p
 
-	python src/pextract.py < data/shared1_es_verb_train.txt > paradigms/shared1_es_verb_train.p 
-	python src/pextract.py < data/shared1_es_noun_train.txt > paradigms/shared1_es_noun_train.p 
-	python src/pextract.py < data/shared1_es_adj_train.txt > paradigms/shared1_es_adj_train.p 
+	python src/pextract.py < data/shared1_es_verb_train.txt > paradigms/shared1_es_verb_train.p
+	python src/pextract.py < data/shared1_es_noun_train.txt > paradigms/shared1_es_noun_train.p
+	python src/pextract.py < data/shared1_es_adj_train.txt > paradigms/shared1_es_adj_train.p
 
-	python src/pextract.py < data/shared1_fi_verb_train.txt > paradigms/shared1_fi_verb_train.p 
-	python src/pextract.py < data/shared1_fi_noun_train.txt > paradigms/shared1_fi_noun_train.p 
-	python src/pextract.py < data/shared1_fi_adj_train.txt > paradigms/shared1_fi_adj_train.p 
+	python src/pextract.py < data/shared1_fi_verb_train.txt > paradigms/shared1_fi_verb_train.p
+	python src/pextract.py < data/shared1_fi_noun_train.txt > paradigms/shared1_fi_noun_train.p
+	python src/pextract.py < data/shared1_fi_adj_train.txt > paradigms/shared1_fi_adj_train.p
 
-	python src/pextract.py < data/shared1_de_verb_train.txt > paradigms/shared1_de_verb_train.p 
-	python src/pextract.py < data/shared1_de_noun_train.txt > paradigms/shared1_de_noun_train.p 
-	python src/pextract.py < data/shared1_de_adj_train.txt > paradigms/shared1_de_adj_train.p 
+	python src/pextract.py < data/shared1_de_verb_train.txt > paradigms/shared1_de_verb_train.p
+	python src/pextract.py < data/shared1_de_noun_train.txt > paradigms/shared1_de_noun_train.p
+	python src/pextract.py < data/shared1_de_adj_train.txt > paradigms/shared1_de_adj_train.p
 
 	python src/pextract.py < data/shared1_ru_verb_train.txt > paradigms/shared1_ru_verb_train.p
 	python src/pextract.py < data/shared1_ru_noun_train.txt > paradigms/shared1_ru_noun_train.p
@@ -110,28 +110,28 @@ pshared:
 	python src/pextract.py < data/shared1_tr_noun_train.txt > paradigms/shared1_tr_noun_train.p
 
 cpshared:
-	python src/cparadigm.py -c paradigms/shared1_ar_verb_train.p > paradigms/shared1_ar_verb_train.cp 
-	python src/cparadigm.py -c paradigms/shared1_ar_noun_train.p > paradigms/shared1_ar_noun_train.cp 
-	python src/cparadigm.py -c paradigms/shared1_ar_adj_train.p > paradigms/shared1_ar_adj_train.cp 
+	python src/cparadigm.py -c paradigms/shared1_ar_verb_train.p > paradigms/shared1_ar_verb_train.cp
+	python src/cparadigm.py -c paradigms/shared1_ar_noun_train.p > paradigms/shared1_ar_noun_train.cp
+	python src/cparadigm.py -c paradigms/shared1_ar_adj_train.p > paradigms/shared1_ar_adj_train.cp
 
-	python src/cparadigm.py -c paradigms/shared1_ka_verb_train.p > paradigms/shared1_ka_verb_train.cp 
-	python src/cparadigm.py -c paradigms/shared1_ka_noun_train.p > paradigms/shared1_ka_noun_train.cp 
-	python src/cparadigm.py -c paradigms/shared1_ka_adj_train.p > paradigms/shared1_ka_adj_train.cp 
+	python src/cparadigm.py -c paradigms/shared1_ka_verb_train.p > paradigms/shared1_ka_verb_train.cp
+	python src/cparadigm.py -c paradigms/shared1_ka_noun_train.p > paradigms/shared1_ka_noun_train.cp
+	python src/cparadigm.py -c paradigms/shared1_ka_adj_train.p > paradigms/shared1_ka_adj_train.cp
 
-	python src/cparadigm.py -c paradigms/shared1_nv_verb_train.p > paradigms/shared1_nv_verb_train.cp 
-	python src/cparadigm.py -c paradigms/shared1_nv_noun_train.p > paradigms/shared1_nv_noun_train.cp 
+	python src/cparadigm.py -c paradigms/shared1_nv_verb_train.p > paradigms/shared1_nv_verb_train.cp
+	python src/cparadigm.py -c paradigms/shared1_nv_noun_train.p > paradigms/shared1_nv_noun_train.cp
 
-	python src/cparadigm.py -c paradigms/shared1_es_verb_train.p > paradigms/shared1_es_verb_train.cp 
-	python src/cparadigm.py -c paradigms/shared1_es_noun_train.p > paradigms/shared1_es_noun_train.cp 
-	python src/cparadigm.py -c paradigms/shared1_es_adj_train.p > paradigms/shared1_es_adj_train.cp 
+	python src/cparadigm.py -c paradigms/shared1_es_verb_train.p > paradigms/shared1_es_verb_train.cp
+	python src/cparadigm.py -c paradigms/shared1_es_noun_train.p > paradigms/shared1_es_noun_train.cp
+	python src/cparadigm.py -c paradigms/shared1_es_adj_train.p > paradigms/shared1_es_adj_train.cp
 
-	python src/cparadigm.py -c paradigms/shared1_fi_verb_train.p > paradigms/shared1_fi_verb_train.cp 
-	python src/cparadigm.py -c paradigms/shared1_fi_noun_train.p > paradigms/shared1_fi_noun_train.cp 
-	python src/cparadigm.py -c paradigms/shared1_fi_adj_train.p > paradigms/shared1_fi_adj_train.cp 
+	python src/cparadigm.py -c paradigms/shared1_fi_verb_train.p > paradigms/shared1_fi_verb_train.cp
+	python src/cparadigm.py -c paradigms/shared1_fi_noun_train.p > paradigms/shared1_fi_noun_train.cp
+	python src/cparadigm.py -c paradigms/shared1_fi_adj_train.p > paradigms/shared1_fi_adj_train.cp
 
-	python src/cparadigm.py -c paradigms/shared1_de_verb_train.p > paradigms/shared1_de_verb_train.cp 
-	python src/cparadigm.py -c paradigms/shared1_de_noun_train.p > paradigms/shared1_de_noun_train.cp 
-	python src/cparadigm.py -c paradigms/shared1_de_adj_train.p > paradigms/shared1_de_adj_train.cp 
+	python src/cparadigm.py -c paradigms/shared1_de_verb_train.p > paradigms/shared1_de_verb_train.cp
+	python src/cparadigm.py -c paradigms/shared1_de_noun_train.p > paradigms/shared1_de_noun_train.cp
+	python src/cparadigm.py -c paradigms/shared1_de_adj_train.p > paradigms/shared1_de_adj_train.cp
 
 	python src/cparadigm.py -c paradigms/shared1_ru_verb_train.p > paradigms/shared1_ru_verb_train.cp
 	python src/cparadigm.py -c paradigms/shared1_ru_noun_train.p > paradigms/shared1_ru_noun_train.cp
@@ -160,7 +160,11 @@ clean:
 #	cd src;python cexp.py ../paradigms/de_noun_train_dev.p ../data/de_noun_test.txt > ../output/de_noun.txt
 #	cd src;python cexp.py ../paradigms/fi_nounadj_train_dev.p ../data/fi_nounadj_test.txt > ../output/fi_nounadj.txt
 #	tail -n 3 output/*
-VENV_NAME = .venv
+ifeq (${VIRTUAL_ENV},)
+  VENV_NAME = .venv
+else
+  VENV_NAME = ${VIRTUAL_ENV}
+endif
 
 install-venv: ${VENV_NAME}/venv.created
 
@@ -171,8 +175,8 @@ ${VENV_NAME}/venv.created:
 install-dev: install-venv ${VENV_NAME}/req.dev
 
 ${VENV_NAME}/req.dev: setup.py setup.cfg requirements.txt
-	.venv/bin/pip install -e .[dev]
+	${VENV_NAME}/bin/pip install -e .[dev]
 	@touch $@
 
 test: install-dev
-	.venv/bin/pytest -vv tests
+	${VENV_NAME}/bin/pytest -vv tests
