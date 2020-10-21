@@ -4,7 +4,7 @@ import re
 from paradigmextract import genregex
 from paradigmextract import regexmatcher
 
-from typing import List, Tuple, Optional, Any
+from typing import List, Tuple, Optional, Any, Union, Dict, Sequence
 
 
 class Paradigm:
@@ -19,14 +19,14 @@ class Paradigm:
 
     def __init__(
         self,
-        form_msds: List[Tuple[str, Any]],
-        var_insts: List[List[Tuple[str, Any]]],
+        form_msds: List[Tuple[str, List[Tuple[Optional[str], str]]]],
+        var_insts: List[List[Tuple[str, str]]],
         p_id: str = "",
         pos: str = "",
         uuid: str = "",
     ) -> None:
         logging.debug("make paradigm %s %s" % (p_id, uuid))
-        self._p_info = {}
+        self._p_info: Dict[str, Any] = {}
         self.forms = []
         self.pos = pos
         self.uuid = uuid
@@ -146,8 +146,14 @@ class Form:
                 [(None,'SGNOM')] no msd type available
     """
 
-    def __init__(self, form: str, msd=(), v_insts: List[List[Tuple[str, Any]]] = ()):
-        (self.form, self.msd) = (form.split("+"), msd)
+    def __init__(
+        self,
+        form: str,
+        msd: Sequence[Tuple[Optional[str], str]] = (),
+        v_insts: Sequence[List[Tuple[str, Any]]] = ()
+    ):
+        self.form: List[str] = form.split("+")
+        self.msd = msd
         self.scount = 0
         # self.identifier = len(msd) > 0 and len(msd[0]) > 1 and msd[0][1] == "identifier"
         r = ""
@@ -208,7 +214,7 @@ class Form:
         else:
             result = []
             for vs in ms:
-                if type(vs) == str:
+                if isinstance(vs, str):
                     var_and_reg = [(vs, self.v_regex[0])]
                 else:
                     var_and_reg = zip(vs, self.v_regex)

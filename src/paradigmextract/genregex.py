@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 
 
 class Genregex:
@@ -8,7 +8,7 @@ class Genregex:
        prefixes in the set that seem to be restricted in their distribution
        and issue a regular expression (Python or foma), that matches a limited
        set of strings.
-       
+
        This is achieved through a number of tests.
        We first make the assumption that strings in a set are drawn from a
        uniform distribution with n members.  Then, we
@@ -18,7 +18,7 @@ class Genregex:
              p = 1-(1/(n+1)) ** num_draws
        where num draws is the length of the list of strings. If this p < 0.05 (by default)
        we assume we have seen all members of the set and declare the set to be fixed.
-       
+
        If the set of members is not found to be fixed, we further investigate
        the suffixes and prefixes in the set. We the find the longest
         (2a) set of suffixes that can be assumed to be fixed
@@ -33,7 +33,7 @@ class Genregex:
        >>>print r.pyregex()
        ^(?=.*(a|b)$)(?=.{1,2}$)(a|b)
        """
-    
+
     def __init__(self, strings: List[str], pvalue: float = 0.05, length: bool = True):
         self.strings = strings
         self.numstrings = len(self.strings)
@@ -44,8 +44,8 @@ class Genregex:
         self.stringset = set()
         self.prefixset = set()
         self.suffixset = set()
-        self.lenrange = ()
-        
+        self.lenrange: Tuple[int, int] = (0, 0)
+
         # Case (1): if the totality of strings seems to have a limited distribution
         if self._significancetest(self.numstrings, len(set(self.strings))):
             self.stringset = set(self.strings)
@@ -84,6 +84,6 @@ class Genregex:
             return u'.+'
         else:
             return '^' + re
-    
+
     def _significancetest(self, num: int, uniq: int):
         return (1.0-(1.0/(uniq+1.0))) ** num <= self.pvalue

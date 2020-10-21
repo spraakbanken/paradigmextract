@@ -1,3 +1,5 @@
+from typing import Optional, List, Tuple
+
 
 class MRegex:
     """Simple re.findall replacement that returns all possible matches -
@@ -13,29 +15,34 @@ class MRegex:
        [('b', 'nan'), ('ban', 'n')]
     """
 
-    def __init__(self, regex):
+    def __init__(self, regex: str):
         self.regex = regex
         self.regexlen = len(regex)
         self.text = ''
         self.textlen = 0
         self.matches = []
-        self.results = []
+        self.results: List[List[Tuple[int, int]]] = []
         self.matched = False
 
-    def findall(self, text):
+    def findall(self, text: str) -> Optional[List[Tuple]]:
         strindex = 0
         regindex = 0
         self.text = text
         self.textlen = len(text)
-        self.results = []
+        self.results: List[List[Tuple[int, int]]] = []
         self.matched = False
         self.match(strindex, regindex, [])
         if self.matched:
             return [tuple(self.text[i:j] for i, j in r) for r in self.results]
         return None
 
-    def match(self, strindex, regindex, groups):
-        # Are we at end of regex _and_ text?
+    def match(
+        self,
+        strindex: int,
+        regindex: int,
+        groups: List[Tuple[int, int]]
+    ) -> None:
+        # Are we at end of regex _1and_ text?
         if strindex == self.textlen and regindex == self.regexlen:
             self.matched = True
             if groups:
