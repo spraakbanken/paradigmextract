@@ -1,4 +1,4 @@
-.PHONY: test
+.PHONY: test test-w-coverage
 
 PYTHONPATH=$PYTHONPATH:./src
 exp:
@@ -180,3 +180,6 @@ ${VENV_NAME}/req.dev: setup.py setup.cfg requirements.txt
 
 test: install-dev
 	${VENV_NAME}/bin/pytest -vv tests
+
+test-w-coverage: install-dev
+	${VENV_NAME}/bin/pytest --cov=paradigmextract --cov-report=term-missing tests

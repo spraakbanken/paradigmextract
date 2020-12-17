@@ -105,6 +105,9 @@ class Paradigm:
         tag: str = "",
         baseform: bool = False,
     ) -> List[Optional[List[Tuple[int, Any]]]]:
+        print(
+            f"paradigm.Paradigm.match(w={w},selection={selection},constrained={constrained},tag={tag},baseform={baseform})"
+        )
         result = []
         if selection is not None:
             forms = [self.forms[i] for i in selection]
@@ -116,7 +119,12 @@ class Paradigm:
             forms = [f for f in forms if f.msd == tag]
         for f in forms:
             xs = f.match_vars(w, constrained)
-            result.append(xs)
+            print(f"paradigm.Paradigm.match: xs = {xs}")
+            if len(self.var_insts) >= 1 and len(self.var_insts[0]) > 1:
+                print(f"paradigm.Paradigm.match: sorting, {xs[0][1][1]}")
+                result.append(sorted(xs, key=lambda x: len(x[1][1])))
+            else:
+                result.append(xs)
         return result
 
     def __call__(self, *insts):
@@ -202,6 +210,8 @@ class Form:
     def match_vars(
         self, w: str, constrained: bool = True
     ) -> Optional[List[Tuple[int, Any]]]:
+        print(f"paradigm.Form.match_vars(w={w},constrained={constrained})")
+        print(f"paradigm.Form.match_vars: self.regex = {self.regex}")
         matcher = regexmatcher.MRegex(self.regex)
         ms = matcher.findall(w)
         if ms is None:

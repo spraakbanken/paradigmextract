@@ -102,12 +102,15 @@ def eval_baseform(
     """Returns a set of variable assigment for word in the first tag that matches"""
 
     def inner(tag: str = ""):
+        print(f"morphparser.eval_baseform.inner(tag={tag})")
         baseform = not tag
         matches = p.match(word, constrained=False, tag=tag, baseform=baseform)
+        print(f"morphparser.eval_baseform.inner: matches = {matches}")
         for m in filter(lambda x: x is not None, matches):
             if not m:
                 m = [(0, ())]  # Add dummy to show match is exact without vars
             for submatch in m:
+                print(f"morphparser.eval_baseform.inner: submatch = {submatch}")
                 if len(submatch) > 0:
                     return submatch[1]
         return None
