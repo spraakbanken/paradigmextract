@@ -4,7 +4,7 @@ import re
 from paradigmextract import genregex
 from paradigmextract import regexmatcher
 
-from typing import List, Tuple, Optional, Any
+from typing import List, Set, Tuple, Optional, Any, Union, Dict, Sequence
 
 
 class Paradigm:
@@ -19,14 +19,14 @@ class Paradigm:
 
     def __init__(
         self,
-        form_msds: List[Tuple[str, Any]],
-        var_insts: List[List[Tuple[str, Any]]],
+        form_msds: List[Tuple[str, List[Tuple[Optional[str], str]]]],
+        var_insts: List[List[Tuple[str, str]]],
         p_id: str = "",
         pos: str = "",
         uuid: str = "",
     ) -> None:
         logging.debug("make paradigm %s %s" % (p_id, uuid))
-        self._p_info = {}
+        self._p_info: Dict[str, Any] = {}
         self.forms = []
         self.pos = pos
         self.uuid = uuid
@@ -63,14 +63,13 @@ class Paradigm:
         return self._p_info[attr]
 
     def __slots(self) -> List[Tuple[bool, Any]]:
-        slts = []
-        """Compute the content of the slots.
-        """
+        """Compute the content of the slots."""
+        slts: List = []
         # string slots
-        fs = [f.strs() for f in self.forms]
-        str_slots = list(zip(*fs))
+        fs: List[List[str]] = [f.strs() for f in self.forms]
+        str_slots: List[Tuple[str, ...]] = list(zip(*fs))
         # var slots
-        vt = defaultdict(list)
+        vt: Dict[str, List[str]] = defaultdict(list)
         for vs in self.var_insts:
             for (v, s) in vs:
                 vt[v].append(s)
@@ -101,11 +100,14 @@ class Paradigm:
     def match(
         self,
         w: str,
-        selection=None,
+        selection: Sequence[int] = None,
         constrained: bool = True,
         tag: str = "",
         baseform: bool = False,
     ) -> List[Optional[List[Tuple[int, Any]]]]:
+        print(
+            f"paradigm.Paradigm.match(w={w},selection={selection},constrained={constrained},tag={tag},baseform={baseform})"
+        )
         result = []
         if selection is not None:
             forms = [self.forms[i] for i in selection]
@@ -117,7 +119,12 @@ class Paradigm:
             forms = [f for f in forms if f.msd == tag]
         for f in forms:
             xs = f.match_vars(w, constrained)
-            result.append(xs)
+            print(f"paradigm.Paradigm.match: xs = {xs}")
+            if xs and len(self.var_insts) >= 1 and len(self.var_insts[0]) > 1:
+                print(f"paradigm.Paradigm.match: sorting, {xs[0][1][1]}")
+                result.append(sorted(xs, key=lambda x: len(x[1][1])))
+            else:
+                result.append(xs)
         return result
 
     def __call__(self, *insts):
@@ -146,9 +153,15 @@ class Form:
                 [(None,'SGNOM')] no msd type available
     """
 
-    def __init__(self, form: str, msd=(), v_insts: List[List[Tuple[str, Any]]] = ()):
-        (self.form, self.msd) = (form.split("+"), msd)
-        self.scount = 0
+    def __init__(
+        self,
+        form: str,
+        msd: Sequence[Tuple[Optional[str], str]] = (),
+        v_insts: Sequence[List[Tuple[str, Any]]] = (),
+    ):
+        self.form: List[str] = form.split("+")
+        self.msd = msd
+        self.scount: int = 0
         # self.identifier = len(msd) > 0 and len(msd[0]) > 1 and msd[0][1] == "identifier"
         r = ""
         for f in self.form:
@@ -160,7 +173,7 @@ class Form:
         self.regex = r
         self.cregex = re.compile(self.regex)
         # vars
-        collect_vars = defaultdict(set)
+        collect_vars: Dict[str, Set[str]] = defaultdict(set)
         for vs in v_insts:
             for (i, v) in vs:
                 collect_vars[i].add(v)
@@ -176,9 +189,9 @@ class Form:
 
     def __call__(self, *insts):
         """Instantiate the variables of the wordform.
-           Args:
-            insts: fun args
-                   Ex: f('schr','i','b')
+        Args:
+         insts: fun args
+                Ex: f('schr','i','b')
         """
         (w, vindex) = ([], 0)
         for p in self.form:
@@ -197,6 +210,8 @@ class Form:
     def match_vars(
         self, w: str, constrained: bool = True
     ) -> Optional[List[Tuple[int, Any]]]:
+        print(f"paradigm.Form.match_vars(w={w},constrained={constrained})")
+        print(f"paradigm.Form.match_vars: self.regex = {self.regex}")
         matcher = regexmatcher.MRegex(self.regex)
         ms = matcher.findall(w)
         if ms is None:
@@ -208,7 +223,7 @@ class Form:
         else:
             result = []
             for vs in ms:
-                if type(vs) == str:
+                if isinstance(vs, str):
                     var_and_reg = [(vs, self.v_regex[0])]
                 else:
                     var_and_reg = zip(vs, self.v_regex)
@@ -236,7 +251,7 @@ class Form:
 
     def strs(self) -> List[str]:
         """Collects the strings in a wordform.
-           A variable is assumed to be surrounded by (possibly empty) strings.
+        A variable is assumed to be surrounded by (possibly empty) strings.
         """
         ss = []
         if self.form[0].isdigit():
