@@ -120,7 +120,7 @@ class Paradigm:
         for f in forms:
             xs = f.match_vars(w, constrained)
             print(f"paradigm.Paradigm.match: xs = {xs}")
-            if len(self.var_insts) >= 1 and len(self.var_insts[0]) > 1:
+            if xs and len(self.var_insts) >= 1 and len(self.var_insts[0]) > 1:
                 print(f"paradigm.Paradigm.match: sorting, {xs[0][1][1]}")
                 result.append(sorted(xs, key=lambda x: len(x[1][1])))
             else:
