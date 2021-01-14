@@ -13,7 +13,7 @@ def learnparadigms(
     for table, tagtable in inflectiontables:
         tablehead = table[0]
         taghead = tagtable[0]
-        wg = [WordGraph.wordtograph(x) for x in table]
+        wg = [WordGraph.from_string(x) for x in table]
         result = functools.reduce(lambda x, y: x & y, wg)
         lcss = result.longestwords
         if not lcss:  # Table has no LCS - no variables
@@ -140,7 +140,7 @@ class WordGraph:
 
     def _maxpath(self):
         """Returns a list of strings that represent the set of longest words
-           accepted by the automaton."""
+        accepted by the automaton."""
         tr = {}
         # Create tr which simply has graph structure without symbols
         for (state, sym) in self.transitions:
@@ -258,7 +258,7 @@ def _firstvarmatch(string, prefix) -> bool:
 
 def _evalfact(lcs, c):
     """Input: a list of variable-bracketed strings, the known LCS
-       Output: number of variables needed and the variables themselves in a list."""
+    Output: number of variables needed and the variables themselves in a list."""
     allbreaks = []
     for w in c:
         breaks = [0] * len(lcs)
@@ -340,7 +340,7 @@ def _vars_to_string(baseform, varlist):
 
 def _collapse_tables(tables):
     """Input: list of tables
-       Output: Collapsed paradigms."""
+    Output: Collapsed paradigms."""
     paradigms = []
     collapsedidx = set()  # Store indices to collapsed tables
     for idx, tab in enumerate(tables):
