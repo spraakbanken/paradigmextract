@@ -1,4 +1,4 @@
-from typing import Optional, List, Tuple, Sequence
+from typing import List, Optional, Tuple
 
 
 class MRegex:
@@ -36,7 +36,9 @@ class MRegex:
             return [tuple(self.text[i:j] for i, j in r) for r in self.results]
         return None
 
-    def match(self, strindex: int, regindex: int, groups: List[Tuple[int, int]]) -> None:
+    def match(
+        self, strindex: int, regindex: int, groups: List[Tuple[int, int]]
+    ) -> None:
         # Are we at end of regex _1and_ text?
         if strindex == self.textlen and regindex == self.regexlen:
             self.matched = True
@@ -49,9 +51,8 @@ class MRegex:
         # Match (.+)-construct
         if self.regex[regindex : regindex + 4] == "(.+)":
             for i in range(strindex + 1, self.textlen + 1):
-                self.match(i, regindex + 4, groups + [(strindex, i)])
+                self.match(i, regindex + 4, [*groups, (strindex, i)])
         # Normal match (one character)
-        else:
-            if self.text[strindex] == self.regex[regindex]:
-                self.match(strindex + 1, regindex + 1, groups)
+        elif self.text[strindex] == self.regex[regindex]:
+            self.match(strindex + 1, regindex + 1, groups)
         return

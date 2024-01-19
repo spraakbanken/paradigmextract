@@ -1,8 +1,8 @@
 import functools
 import math
-import paradigmextract.paradigm as paradigm
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple, Union
 
-from typing import List, Dict, Tuple, Set, Optional, Sequence, Any, Iterable, Union
+import paradigmextract.paradigm as paradigm
 
 
 class StringNgram:
@@ -20,12 +20,16 @@ class StringNgram:
         self.ngramprior = ngramprior
         if alphabet:
             self.alphabet |= alphabet
-        ngrams = [x for word in self.stringset for x in self._letter_ngrams(word, order)]
+        ngrams = [
+            x for word in self.stringset for x in self._letter_ngrams(word, order)
+        ]
         self.ngramcounts: Dict = {}
         # Collect counts for n-grams and n-1 grams (mgrams)
         for ngram in ngrams:
             self.ngramcounts[ngram] = self.ngramcounts.get(ngram, 0) + 1
-        mgrams = [x for word in self.stringset for x in self._letter_ngrams(word, order - 1)]
+        mgrams = [
+            x for word in self.stringset for x in self._letter_ngrams(word, order - 1)
+        ]
         for mgram in mgrams:
             self.ngramcounts[mgram] = self.ngramcounts.get(mgram, 0) + 1
 
@@ -35,7 +39,9 @@ class StringNgram:
 
     def _getprob(self, ngram) -> float:
         numerator = self.ngramcounts.get(ngram, 0) + self.ngramprior
-        denominator = self.ngramcounts.get(ngram[:-1], 0) + len(self.alphabet) * self.ngramprior
+        denominator = (
+            self.ngramcounts.get(ngram[:-1], 0) + len(self.alphabet) * self.ngramprior
+        )
         return math.log(numerator / float(denominator))
 
     @staticmethod
@@ -69,7 +75,7 @@ def eval_multiple_entries(
     tags: Sequence[str] = (),
     baseform: bool = False,
 ) -> Set[Tuple[int, Any]]:
-    """Returns a set of consistent variable assigment to all words."""
+    """Returns a set of consistent variable assignment to all words."""
     wmatches: List[Set] = []
     for ix, w in enumerate(words):
         tag = tags[ix] if len(tags) > ix else ""
@@ -93,7 +99,7 @@ def eval_multiple_entries(
 def eval_baseform(
     p: paradigm.Paradigm, word: str, possible_tags: Sequence[str] = ()
 ) -> Optional[List[str]]:
-    """Returns a set of variable assigment for word in the first tag that matches"""
+    """Returns a set of variable assignment for word in the first tag that matches"""
 
     def inner(tag: str = ""):
         baseform = not tag
@@ -118,15 +124,16 @@ def eval_baseform(
 
 def build(
     paradigms, ngramorder: int, ngramprior: float
-) -> Tuple[List[paradigm.Paradigm], int, Dict[str, Tuple[float, List[StringNgram]]], Set[str]]:
+) -> Tuple[
+    List[paradigm.Paradigm], int, Dict[str, Tuple[float, List[StringNgram]]], Set[str]
+]:
     alphabet = _paradigms_to_alphabet(paradigms)
 
     numexamples = sum(map(lambda x: x.count, paradigms))
 
-    lms = {}
-    # Learn n-gram LM for each variable
-    for p in paradigms:
-        lms[p.uuid] = _lms_paradigm(p, alphabet, ngramorder, ngramprior)
+    lms = {
+        p.uuid: _lms_paradigm(p, alphabet, ngramorder, ngramprior) for p in paradigms
+    }
     return paradigms, numexamples, lms, alphabet
 
 
@@ -135,9 +142,11 @@ def _lms_paradigm(
 ) -> Tuple[float, List[StringNgram]]:
     numvars = (len(paradigm_.slots) - 1) / 2
     slotmodels = []
-    for v in range(0, int(numvars)):
+    for v in range(int(numvars)):
         varinsts = paradigm_.slots[v * 2 + 1][1]
-        model = StringNgram(varinsts, alphabet=alphabet, order=ngramorder, ngramprior=ngramprior)
+        model = StringNgram(
+            varinsts, alphabet=alphabet, order=ngramorder, ngramprior=ngramprior
+        )
         slotmodels.append(model)
     return numvars, slotmodels
 
@@ -152,6 +161,7 @@ def test_paradigms(
     baseform: bool = False,
 ):
     tags: List = []
+    # sourcery skip: no-conditionals-in-tests
     if isinstance(inp, tuple):
         words, tags = inp
     else:
@@ -170,7 +180,9 @@ def test_paradigms(
         ]
     else:
         fittingparadigms = [
-            p for p in paradigms if all(p.fits_paradigm(w, constrained=False) for w in words)
+            p
+            for p in paradigms
+            if all(p.fits_paradigm(w, constrained=False) for w in words)
         ]
 
     fittingparadigms = list(
@@ -182,6 +194,7 @@ def test_paradigms(
 
     analyses = []
     # Calculate score for each possible variable assignment
+    # sourcery skip: no-loop-in-tests
     for p in fittingparadigms:
         lm_score = lms[p.uuid]
         match_table = list(zip(words, tags)) if match_all else []
@@ -219,7 +232,9 @@ def run_paradigms(
     for p in fittingparadigms[:kbest]:
         lm_score = lms[p.uuid]
         analyses.extend(
-            test_paradigm(p, words, numexamples, pprior, lm_score, tags=tags, baseform=baseform)
+            test_paradigm(
+                p, words, numexamples, pprior, lm_score, tags=tags, baseform=baseform
+            )
         )
 
     return analyses
@@ -253,7 +268,7 @@ def test_paradigm(
     def match(_p, _v, table):
         try:
             return _p(*_v) == table
-        except:
+        except Exception:  # noqa: BLE001
             return False
 
     if match_table:

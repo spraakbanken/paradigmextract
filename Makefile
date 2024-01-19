@@ -172,6 +172,7 @@ install-dev:
 	rye sync
 
 PROJECT := paradigmextract
+PROJECT_SRC := paradigmextract
 default_cov := "--cov=paradigmextract"
 cov_report := "term-missing"
 cov := ${default_cov}
@@ -179,9 +180,16 @@ cov := ${default_cov}
 all_tests := tests
 tests := tests
 
+.PHONY: test
 test: 
 	${INVENV_NAME} pytest -vv ${tests}
 
+
+.PHONY: doc-tests
+doc-tests:
+	${INVENV} pytest --doctest-modules ${PROJECT_SRC}
+
+.PHONY: test-w-coverage
 test-w-coverage: install-dev
 	${INVENV} pytest -vv ${cov} --cov-report=${cov_report} ${all_tests}
 

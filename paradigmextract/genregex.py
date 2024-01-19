@@ -28,9 +28,9 @@ class Genregex:
     limit the set of allowable lengths.
 
     Example:
-    >>>words = ['ab','ab','ab','ba','ba','ba','ab','ba','a','b']
-    >>>r = Genregex(words)
-    >>>print r.pyregex()
+    >>> words = ['ab','ab','ab','ba','ba','ba','ab','ba','a','b']
+    >>> r = Genregex(words)
+    >>> print(r.pyregex())
     ^(?=.*(a|b)$)(?=.{1,2}$)(a|b)
     """
 
@@ -80,10 +80,7 @@ class Genregex:
             re += "(?=.{" + str(self.lenrange[0]) + "," + str(self.lenrange[1]) + "}$)"
         if len(self.prefixset) > 0:
             re += "(" + "|".join(self.prefixset) + ")"
-        if len(re) == 0:
-            return ".+"
-        else:
-            return "^" + re
+        return f"^{re}" if re else ".+"
 
     def _significancetest(self, num: int, uniq: int):
         return (1.0 - (1.0 / (uniq + 1.0))) ** num <= self.pvalue

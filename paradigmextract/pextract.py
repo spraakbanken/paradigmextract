@@ -2,10 +2,13 @@ import functools
 import itertools
 import re
 from typing import List, Tuple
+
 import paradigmextract.paradigm as paradigm
 
 
-def learnparadigms(inflectiontables: List[Tuple[List[str], List[List[Tuple[str, str]]]]]):
+def learnparadigms(
+    inflectiontables: List[Tuple[List[str], List[List[Tuple[str, str]]]]]
+):
     vartables = []
     table_limit = 16
     for table, tagtable in inflectiontables:
@@ -15,7 +18,9 @@ def learnparadigms(inflectiontables: List[Tuple[List[str], List[List[Tuple[str, 
         result = functools.reduce(lambda x, y: x & y, wg)
         lcss = result.longestwords
         if not lcss:  # Table has no LCS - no variables
-            vartables.append((tablehead, taghead, [[table, table, table, [], 0, 0]], tagtable))
+            vartables.append(
+                (tablehead, taghead, [[table, table, table, [], 0, 0]], tagtable)
+            )
             continue
 
         combos = []
@@ -35,9 +40,13 @@ def learnparadigms(inflectiontables: List[Tuple[List[str], List[List[Tuple[str, 
             combinations = itertools.product(*factorlist)
             for c in combinations:
                 (numvars, variablelist) = _evalfact(lcs, c)
-                infixcount = functools.reduce(lambda x, y: x + _count_infix_segments(y), c, 0)
+                infixcount = functools.reduce(
+                    lambda x, y: x + _count_infix_segments(y), c, 0
+                )
                 variabletable = [_string_to_varstring(s, variablelist) for s in c]
-                combos.append([table, c, variabletable, variablelist, numvars, infixcount])
+                combos.append(
+                    [table, c, variabletable, variablelist, numvars, infixcount]
+                )
 
         vartables.append((tablehead, taghead, combos, tagtable))
 
@@ -75,7 +84,9 @@ class WordGraph:
 
     def __init__(self, transitions):
         self.alphabet = {symbol for (state, symbol) in transitions}
-        self.states = {state for (state, symbol) in transitions} | set(transitions.values())
+        self.states = {state for (state, symbol) in transitions} | set(
+            transitions.values()
+        )
         self.transitions = transitions
         self.revtrans = {}
         for state, sym in self.transitions:
@@ -113,7 +124,9 @@ class WordGraph:
                         statemap[(atarget, btarget)] = nextstate
                         nextstate += 1
                         stack.append((atarget, btarget))
-                    trans[(statemap[(asource, bsource)], sym)] = statemap[(atarget, btarget)]
+                    trans[(statemap[(asource, bsource)], sym)] = statemap[
+                        (atarget, btarget)
+                    ]
 
         return WordGraph(trans)
 
@@ -124,7 +137,7 @@ class WordGraph:
             return
         for backstate, symbol in self.revtrans[state]:
             if maxlen[backstate] == maxlen[state] - 1:
-                self._backtrace(maxsources, maxlen, backstate, tempstring + [symbol])
+                self._backtrace(maxsources, maxlen, backstate, [*tempstring, symbol])
 
     def _maxpath(self):
         """Returns a list of strings that represent the set of longest words
@@ -217,12 +230,9 @@ def _string_to_varstring(string, variables):
                 if idx < len(string) - 1:
                     s.append("+")
                 varpos += 1
-            idx += 1
-            continue
         else:
             s.append(string[idx])
-            idx += 1
-
+        idx += 1
     return "".join(s)
 
 
@@ -258,9 +268,8 @@ def _evalfact(lcs, c):
             elif pos == "]":
                 inside = 0
                 breaks[p - 1] = 1
-            else:
-                if inside:
-                    p += 1
+            elif inside:
+                p += 1
 
         allbreaks.append(breaks)
     finalbreaks = [0] * len(lcs)
@@ -273,7 +282,7 @@ def _evalfact(lcs, c):
     variables = []
     currvar = ""
     for idx, val in enumerate(lcs):
-        currvar += lcs[idx]
+        currvar += val
         if finalbreaks[idx] == 1:
             variables.append(currvar)
             currvar = ""
@@ -294,28 +303,28 @@ def _findfactors(word, lcs):
             return
         if posw != len(word) and posl == len(lcs):
             if inmatch:
-                rec(word, lcs, posw + 1, posl, 0, tempstring + ["]"] + [word[posw]])
+                rec(word, lcs, posw + 1, posl, 0, [*tempstring, "]", word[posw]])
             else:
-                rec(word, lcs, posw + 1, posl, 0, tempstring + [word[posw]])
+                rec(word, lcs, posw + 1, posl, 0, [*tempstring, word[posw]])
             return
 
         if posw == len(word) and posl == len(lcs):
             if inmatch:
-                factors.append("".join(tempstring + ["]"]))
+                factors.append("".join([*tempstring, "]"]))
             else:
                 factors.append("".join(tempstring))
             return
 
         if word[posw] == lcs[posl]:
             if inmatch:
-                rec(word, lcs, posw + 1, posl + 1, 1, tempstring + [word[posw]])
+                rec(word, lcs, posw + 1, posl + 1, 1, [*tempstring, word[posw]])
             else:
-                rec(word, lcs, posw + 1, posl + 1, 1, tempstring + ["["] + [word[posw]])
+                rec(word, lcs, posw + 1, posl + 1, 1, [*tempstring, "[", word[posw]])
 
         if inmatch:
-            rec(word, lcs, posw + 1, posl, 0, tempstring + ["]"] + [word[posw]])
+            rec(word, lcs, posw + 1, posl, 0, [*tempstring, "]", word[posw]])
         else:
-            rec(word, lcs, posw + 1, posl, 0, tempstring + [word[posw]])
+            rec(word, lcs, posw + 1, posl, 0, [*tempstring, word[posw]])
 
     rec(word, lcs, 0, 0, 0, [])
     return factors[:]
@@ -323,7 +332,7 @@ def _findfactors(word, lcs):
 
 def _vars_to_string(baseform, varlist):
     vstr = [(str(idx + 1), v) for idx, v in enumerate(varlist)]
-    return [("first-attest", baseform)] + vstr
+    return [("first-attest", baseform), *vstr]
 
 
 def _collapse_tables(tables):
@@ -357,7 +366,9 @@ def _collapse_tables(tables):
 
 
 def _ffilter_lcp(factorlist):
-    flatten = lambda x: [y for l in x for y in flatten(l)] if type(x) is list else [x]
+    def flatten(x):
+        return [y for l in x for y in flatten(l)] if isinstance(x, list) else [x]
+
     lcprefix = _lcp(flatten(factorlist))
     factorlist = [[x for x in w if _firstvarmatch(x, lcprefix)] for w in factorlist]
     return factorlist
@@ -397,7 +408,9 @@ def _ffilter_leftmost_sum(factorlist):
             x
             for x in w
             if sum(i for i in range(len(x)) if x.startswith("[", i))
-            == min(map(lambda x: sum(i for i in range(len(x)) if x.startswith("[", i)), w))
+            == min(
+                map(lambda x: sum(i for i in range(len(x)) if x.startswith("[", i)), w)
+            )
         ]
         for w in factorlist
     ]
