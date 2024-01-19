@@ -33,7 +33,7 @@ class Paradigm:
         self.var_insts = var_insts
         self.p_id = p_id
 
-        for (f, msd) in form_msds:
+        for f, msd in form_msds:
             self.forms.append(Form(f, msd, var_insts))
 
     def __getattr__(self, attr):
@@ -49,8 +49,7 @@ class Paradigm:
             if len(self.var_insts) != 0:
                 if not self.p_id:
                     self._p_info["name"] = (
-                        "p_%s"
-                        % self.__call__(*[s for (_, s) in self.var_insts[0][1:]])[0][0]
+                        "p_%s" % self.__call__(*[s for (_, s) in self.var_insts[0][1:]])[0][0]
                     )
                 self._p_info["count"] = len(self.var_insts)
                 self._p_info["members"] = [var[0][1] for var in self.var_insts]
@@ -71,14 +70,12 @@ class Paradigm:
         # var slots
         vt: Dict[str, List[str]] = defaultdict(list)
         for vs in self.var_insts:
-            for (v, s) in vs:
+            for v, s in vs:
                 vt[v].append(s)
         var_slots = list(vt.items())
         var_slots.sort(key=lambda x: x[0])
         (s_index, v_index) = (0, 0)
-        for i in range(
-            len(str_slots) + len(var_slots)
-        ):  # interleave strings and variables
+        for i in range(len(str_slots) + len(var_slots)):  # interleave strings and variables
             if i % 2 == 0:
                 slts.append((False, str_slots[s_index]))
                 s_index += 1
@@ -175,14 +172,12 @@ class Form:
         # vars
         collect_vars: Dict[str, Set[str]] = defaultdict(set)
         for vs in v_insts:
-            for (i, v) in vs:
+            for i, v in vs:
                 collect_vars[i].add(v)
         self.v_regex = []
-        for (_, ss) in collect_vars.items():
+        for _, ss in collect_vars.items():
             try:
-                self.v_regex.append(
-                    re.compile(genregex.Genregex(ss, pvalue=0.05).pyregex())
-                )
+                self.v_regex.append(re.compile(genregex.Genregex(ss, pvalue=0.05).pyregex()))
             except:
                 logging.error("error reading %s!" % ss)
                 raise
@@ -207,9 +202,7 @@ class Form:
             return False
         return self.match_vars(w, constrained) is not None
 
-    def match_vars(
-        self, w: str, constrained: bool = True
-    ) -> Optional[List[Tuple[int, Any]]]:
+    def match_vars(self, w: str, constrained: bool = True) -> Optional[List[Tuple[int, Any]]]:
         print(f"paradigm.Form.match_vars(w={w},constrained={constrained})")
         print(f"paradigm.Form.match_vars: self.regex = {self.regex}")
         matcher = regexmatcher.MRegex(self.regex)
@@ -229,16 +222,14 @@ class Form:
                     var_and_reg = zip(vs, self.v_regex)
                 vcount = 0
                 m_all = True
-                for (s, r) in var_and_reg:
+                for s, r in var_and_reg:
                     m = r.match(s)
                     if m is None:
                         return None
                     xs = m.groups()  # .+-matches have no grouping
                     if len(xs) > 0 or r.pattern == ".+":
                         if r.pattern != ".+":
-                            vcount += len(
-                                "".join(xs)
-                            )  # select the variable specificity
+                            vcount += len("".join(xs))  # select the variable specificity
                     else:
                         m_all = False
                         break
@@ -267,7 +258,7 @@ class Form:
 
     def __str__(self) -> str:
         ms = []
-        for (t, v) in self.msd:
+        for t, v in self.msd:
             if t is not None:
                 if v is not None:
                     ms.append("%s=%s" % (t, v))

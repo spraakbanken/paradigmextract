@@ -20,16 +20,12 @@ class StringNgram:
         self.ngramprior = ngramprior
         if alphabet:
             self.alphabet |= alphabet
-        ngrams = [
-            x for word in self.stringset for x in self._letter_ngrams(word, order)
-        ]
+        ngrams = [x for word in self.stringset for x in self._letter_ngrams(word, order)]
         self.ngramcounts: Dict = {}
         # Collect counts for n-grams and n-1 grams (mgrams)
         for ngram in ngrams:
             self.ngramcounts[ngram] = self.ngramcounts.get(ngram, 0) + 1
-        mgrams = [
-            x for word in self.stringset for x in self._letter_ngrams(word, order - 1)
-        ]
+        mgrams = [x for word in self.stringset for x in self._letter_ngrams(word, order - 1)]
         for mgram in mgrams:
             self.ngramcounts[mgram] = self.ngramcounts.get(mgram, 0) + 1
 
@@ -39,9 +35,7 @@ class StringNgram:
 
     def _getprob(self, ngram) -> float:
         numerator = self.ngramcounts.get(ngram, 0) + self.ngramprior
-        denominator = (
-            self.ngramcounts.get(ngram[:-1], 0) + len(self.alphabet) * self.ngramprior
-        )
+        denominator = self.ngramcounts.get(ngram[:-1], 0) + len(self.alphabet) * self.ngramprior
         return math.log(numerator / float(denominator))
 
     @staticmethod
@@ -124,9 +118,7 @@ def eval_baseform(
 
 def build(
     paradigms, ngramorder: int, ngramprior: float
-) -> Tuple[
-    List[paradigm.Paradigm], int, Dict[str, Tuple[float, List[StringNgram]]], Set[str]
-]:
+) -> Tuple[List[paradigm.Paradigm], int, Dict[str, Tuple[float, List[StringNgram]]], Set[str]]:
     alphabet = _paradigms_to_alphabet(paradigms)
 
     numexamples = sum(map(lambda x: x.count, paradigms))
@@ -145,9 +137,7 @@ def _lms_paradigm(
     slotmodels = []
     for v in range(0, int(numvars)):
         varinsts = paradigm_.slots[v * 2 + 1][1]
-        model = StringNgram(
-            varinsts, alphabet=alphabet, order=ngramorder, ngramprior=ngramprior
-        )
+        model = StringNgram(varinsts, alphabet=alphabet, order=ngramorder, ngramprior=ngramprior)
         slotmodels.append(model)
     return numvars, slotmodels
 
@@ -180,9 +170,7 @@ def test_paradigms(
         ]
     else:
         fittingparadigms = [
-            p
-            for p in paradigms
-            if all(p.fits_paradigm(w, constrained=False) for w in words)
+            p for p in paradigms if all(p.fits_paradigm(w, constrained=False) for w in words)
         ]
 
     fittingparadigms = list(
@@ -231,9 +219,7 @@ def run_paradigms(
     for p in fittingparadigms[:kbest]:
         lm_score = lms[p.uuid]
         analyses.extend(
-            test_paradigm(
-                p, words, numexamples, pprior, lm_score, tags=tags, baseform=baseform
-            )
+            test_paradigm(p, words, numexamples, pprior, lm_score, tags=tags, baseform=baseform)
         )
 
     return analyses

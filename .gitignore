@@ -6,3 +6,5 @@ __pycache__
 
 # VS Code settings
 .vscode/
+requirements-dev.lock
+requirements.lock

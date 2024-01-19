@@ -11,9 +11,7 @@ def get_lcs(table):
 
 
 def test_all():
-    join = os.path.join(
-        "/", *os.path.realpath(__file__).split("/")[:-2], "testdata.json"
-    )
+    join = os.path.join("/", *os.path.realpath(__file__).split("/")[:-2], "testdata.json")
     with open(join) as fp:
         test_tables = json.load(fp)
         for table in test_tables:

@@ -161,25 +161,46 @@ clean:
 #	cd src;python cexp.py ../paradigms/fi_nounadj_train_dev.p ../data/fi_nounadj_test.txt > ../output/fi_nounadj.txt
 #	tail -n 3 output/*
 ifeq (${VIRTUAL_ENV},)
-  VENV_NAME = .venv
+  VENV_NAME= .venv
+  INVENV=rye run
 else
-  VENV_NAME = ${VIRTUAL_ENV}
+  VENV_NAME= ${VIRTUAL_ENV}
+  INVENV=
 endif
 
-install-venv: ${VENV_NAME}/venv.created
+install-dev:
+	rye sync
 
-${VENV_NAME}/venv.created:
-	test -d ${VENV_NAME} || python -m venv ${VENV_NAME}
-	@touch $@
+PROJECT := paradigmextract
+default_cov := "--cov=paradigmextract"
+cov_report := "term-missing"
+cov := ${default_cov}
 
-install-dev: install-venv ${VENV_NAME}/req.dev
+all_tests := tests
+tests := tests
 
-${VENV_NAME}/req.dev: setup.py setup.cfg requirements.txt
-	${VENV_NAME}/bin/pip install -e .[dev]
-	@touch $@
-
-test: install-dev
-	${VENV_NAME}/bin/pytest -vv tests
+test: 
+	${INVENV_NAME} pytest -vv ${tests}
 
 test-w-coverage: install-dev
-	${VENV_NAME}/bin/pytest --cov=paradigmextract --cov-report=term-missing tests
+	${INVENV} pytest -vv ${cov} --cov-report=${cov_report} ${all_tests}
+
+.PHONY: type-check
+type-check:
+	${INVENV} mypy --config-file mypy.ini ${PROJECT} ${tests}
+
+.PHONY: lint
+lint:
+	${INVENV} ruff ${PROJECT} ${tests}
+
+part := "patch"
+bumpversion: install-dev
+	${INVENV} bump2version ${part}
+
+.PHONY: fmt
+fmt:
+	${INVENV} ruff format ${PROJECT} ${tests}
+
+.PHONY: fmt-check
+fmt-check:
+	${INVENV} ruff format --check ${PROJECT} ${tests}

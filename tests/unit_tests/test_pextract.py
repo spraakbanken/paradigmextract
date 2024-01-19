@@ -22,9 +22,7 @@ def test_longest_variable_with_string_wo_variable_returns_0():
         ("t[e]st[ab]t[dfg]sfy[ty]", 3),
     ],
 )
-def test_longest_variable_with_string_w_variables_returns_correct_length(
-    s: str, length: int
-):
+def test_longest_variable_with_string_w_variables_returns_correct_length(s: str, length: int):
     assert _longest_variable(s) == length
 
 

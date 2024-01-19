@@ -1,0 +1,32 @@
+select = [
+    "A",
+    #   "ANN",
+    "B",
+    "BLE",
+    "C4",
+    "C90",
+    #   "D",
+    "E",
+    "F",
+    # "FBT",
+    "I",
+    "RUF",
+    "S",
+    "YTT",
+]
+
+# Never enforce `E501` (line length violations).
+# ignore = ["E501"]
+ignore = ["ANN101", "ANN102", "D203", "D213", "C417"]
+
+line-length = 97
+
+target-version = "py39"
+
+# Avoid trying to fix flake8-bugbear (`B`) violations.
+unfixable = ["B"]
+
+# Ignore `E402` (import violations) in all `__init__.py` files, and in `path/to/file.py`.
+[per-file-ignores]
+"tests/*" = ["D100", "D101", "D102", "D103", "D104", "S101"]
+# "__init__.py" = ["E402"]
