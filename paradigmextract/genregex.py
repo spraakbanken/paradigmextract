@@ -1,6 +1,3 @@
-from typing import List
-
-
 class Genregex:
 
     """Generalizes a list of strings into a regex.
@@ -34,7 +31,7 @@ class Genregex:
     ^(?=.*(a|b)$)(?=.{1,2}$)(a|b)
     """
 
-    def __init__(self, strings: List[str], pvalue: float = 0.05, length: bool = True):
+    def __init__(self, strings: list[str], pvalue: float = 0.05, length: bool = True):
         self.strings = strings
         self.numstrings = len(self.strings)
         self.pvalue = pvalue

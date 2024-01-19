@@ -1,9 +1,11 @@
 import logging
 import re
 from collections import defaultdict
-from typing import Any, Dict, List, Optional, Sequence, Set, Tuple
+from typing import Any, Optional, Sequence, Tuple
 
 from paradigmextract import genregex, regexmatcher
+
+logger = logging.getLogger(__name__)
 
 
 class Paradigm:
@@ -18,14 +20,14 @@ class Paradigm:
 
     def __init__(
         self,
-        form_msds: List[Tuple[str, List[Tuple[Optional[str], str]]]],
-        var_insts: List[List[Tuple[str, str]]],
+        form_msds: list[Tuple[str, list[Tuple[Optional[str], str]]]],
+        var_insts: list[list[Tuple[str, str]]],
         p_id: str = "",
         pos: str = "",
         uuid: str = "",
     ) -> None:
-        logging.debug("make paradigm %s %s", p_id, uuid)
-        self._p_info: Dict[str, Any] = {}
+        logger.debug("make paradigm %s %s", p_id, uuid)
+        self._p_info: dict[str, Any] = {}
         self.forms = []
         self.pos = pos
         self.uuid = uuid
@@ -60,14 +62,14 @@ class Paradigm:
         self._p_info["slots"] = self.__slots()
         return self._p_info[attr]
 
-    def __slots(self) -> List[Tuple[bool, Any]]:
+    def __slots(self) -> list[Tuple[bool, Any]]:
         """Compute the content of the slots."""
-        slts: List = []
+        slts: list = []
         # string slots
-        fs: List[List[str]] = [f.strs() for f in self.forms]
-        str_slots: List[Tuple[str, ...]] = list(zip(*fs))
+        fs: list[list[str]] = [f.strs() for f in self.forms]
+        str_slots: list[Tuple[str, ...]] = list(zip(*fs))
         # var slots
-        vt: Dict[str, List[str]] = defaultdict(list)
+        vt: dict[str, list[str]] = defaultdict(list)
         for vs in self.var_insts:
             for v, s in vs:
                 vt[v].append(s)
@@ -102,7 +104,7 @@ class Paradigm:
         constrained: bool = True,
         tag: str = "",
         baseform: bool = False,
-    ) -> List[Optional[List[Tuple[int, Any]]]]:
+    ) -> list[Optional[list[Tuple[int, Any]]]]:
         print(
             f"paradigm.Paradigm.match(w={w},selection={selection},constrained={constrained},tag={tag},baseform={baseform})"
         )
@@ -154,10 +156,10 @@ class Form:
     def __init__(
         self,
         form: str,
-        msd: Sequence[Tuple[Optional[str], str]] = (),
-        v_insts: Sequence[List[Tuple[str, Any]]] = (),
+        msd: list[Tuple[Optional[str], str]] = (),
+        v_insts: Sequence[list[Tuple[str, Any]]] = (),
     ):
-        self.form: List[str] = form.split("+")
+        self.form: list[str] = form.split("+")
         self.msd = msd
         self.scount: int = 0
         # self.identifier = len(msd) > 0 and len(msd[0]) > 1 and msd[0][1] == "identifier"
@@ -171,7 +173,7 @@ class Form:
         self.regex = r
         self.cregex = re.compile(self.regex)
         # vars
-        collect_vars: Dict[str, Set[str]] = defaultdict(set)
+        collect_vars: dict[str, set[str]] = defaultdict(set)
         for vs in v_insts:
             for i, v in vs:
                 collect_vars[i].add(v)
@@ -207,7 +209,7 @@ class Form:
 
     def match_vars(
         self, w: str, constrained: bool = True
-    ) -> Optional[List[Tuple[int, Any]]]:
+    ) -> Optional[list[Tuple[int, Any]]]:
         print(f"paradigm.Form.match_vars(w={w},constrained={constrained})")
         print(f"paradigm.Form.match_vars: self.regex = {self.regex}")
         matcher = regexmatcher.MRegex(self.regex)
@@ -242,7 +244,7 @@ class Form:
                 result.append((self.scount + vcount, vs))
         return result or None
 
-    def strs(self) -> List[str]:
+    def strs(self) -> list[str]:
         """Collects the strings in a wordform.
         A variable is assumed to be surrounded by (possibly empty) strings.
         """

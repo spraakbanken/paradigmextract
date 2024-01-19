@@ -1,6 +1,6 @@
 import functools
 import math
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple, Union
+from typing import Any, Iterable, Optional, Sequence, Tuple, Union
 
 import paradigmextract.paradigm as paradigm
 
@@ -8,8 +8,8 @@ import paradigmextract.paradigm as paradigm
 class StringNgram:
     def __init__(
         self,
-        stringset: List[str],
-        alphabet: Optional[Set[str]] = None,
+        stringset: list[str],
+        alphabet: Optional[set[str]] = None,
         order: int = 2,
         ngramprior: float = 0.01,
     ) -> None:
@@ -23,7 +23,7 @@ class StringNgram:
         ngrams = [
             x for word in self.stringset for x in self._letter_ngrams(word, order)
         ]
-        self.ngramcounts: Dict = {}
+        self.ngramcounts: dict = {}
         # Collect counts for n-grams and n-1 grams (mgrams)
         for ngram in ngrams:
             self.ngramcounts[ngram] = self.ngramcounts.get(ngram, 0) + 1
@@ -45,11 +45,11 @@ class StringNgram:
         return math.log(numerator / float(denominator))
 
     @staticmethod
-    def _letter_ngrams(word: str, n: int) -> List[str]:
+    def _letter_ngrams(word: str, n: int) -> list[str]:
         return ["".join(x) for x in zip(*[word[i:] for i in range(n)])]
 
 
-def _paradigms_to_alphabet(paradigms: List[paradigm.Paradigm]) -> Set[str]:
+def _paradigms_to_alphabet(paradigms: list[paradigm.Paradigm]) -> set[str]:
     """Extracts all used symbols from an iterable of paradigms."""
     alphabet = set()
     for para in paradigms:
@@ -59,7 +59,7 @@ def _paradigms_to_alphabet(paradigms: List[paradigm.Paradigm]) -> Set[str]:
     return alphabet - {"_"}
 
 
-def _eval_vars(matches: List[str], lm: Tuple[float, List[StringNgram]]):
+def _eval_vars(matches: list[str], lm: Tuple[float, list[StringNgram]]):
     if not lm[1]:
         # If paradigm does not have any instances.
         # This may happen if the paradigms are not updated
@@ -71,12 +71,12 @@ def _eval_vars(matches: List[str], lm: Tuple[float, List[StringNgram]]):
 
 def eval_multiple_entries(
     p: paradigm.Paradigm,
-    words: List[str],
+    words: list[str],
     tags: Sequence[str] = (),
     baseform: bool = False,
-) -> Set[Tuple[int, Any]]:
+) -> set[Tuple[int, Any]]:
     """Returns a set of consistent variable assignment to all words."""
-    wmatches: List[Set] = []
+    wmatches: list[set] = []
     for ix, w in enumerate(words):
         tag = tags[ix] if len(tags) > ix else ""
         wmatch = set()
@@ -98,7 +98,7 @@ def eval_multiple_entries(
 
 def eval_baseform(
     p: paradigm.Paradigm, word: str, possible_tags: Sequence[str] = ()
-) -> Optional[List[str]]:
+) -> Optional[list[str]]:
     """Returns a set of variable assignment for word in the first tag that matches"""
 
     def inner(tag: str = ""):
@@ -125,7 +125,7 @@ def eval_baseform(
 def build(
     paradigms, ngramorder: int, ngramprior: float
 ) -> Tuple[
-    List[paradigm.Paradigm], int, Dict[str, Tuple[float, List[StringNgram]]], Set[str]
+    list[paradigm.Paradigm], int, dict[str, Tuple[float, list[StringNgram]]], set[str]
 ]:
     alphabet = _paradigms_to_alphabet(paradigms)
 
@@ -139,7 +139,7 @@ def build(
 
 def _lms_paradigm(
     paradigm_, alphabet, ngramorder, ngramprior
-) -> Tuple[float, List[StringNgram]]:
+) -> Tuple[float, list[StringNgram]]:
     numvars = (len(paradigm_.slots) - 1) / 2
     slotmodels = []
     for v in range(int(numvars)):
@@ -152,15 +152,15 @@ def _lms_paradigm(
 
 
 def test_paradigms(
-    inp: Union[List[str], Tuple[List[str], List[str]]],
-    paradigms: List[paradigm.Paradigm],
+    inp: Union[list[str], Tuple[list[str], list[str]]],
+    paradigms: list[paradigm.Paradigm],
     numexamples: int,
-    lms: Dict[str, Tuple[float, List[StringNgram]]],
+    lms: dict[str, Tuple[float, list[StringNgram]]],
     pprior: float,
     match_all: bool = False,
     baseform: bool = False,
 ):
-    tags: List = []
+    tags: list = []
     # sourcery skip: no-conditionals-in-tests
     if isinstance(inp, tuple):
         words, tags = inp
@@ -224,7 +224,7 @@ def run_paradigms(
     numexamples=1,
     baseform=False,
     tags=(),
-) -> List[Tuple[float, paradigm.Paradigm, Iterable[str]]]:
+) -> list[Tuple[float, paradigm.Paradigm, Iterable[str]]]:
     if lms is None:
         lms = {}
     analyses = []
@@ -242,14 +242,14 @@ def run_paradigms(
 
 def test_paradigm(
     para: paradigm.Paradigm,
-    words: List[str],
+    words: list[str],
     numexamples: int,
     pprior: float,
-    lm_score: Tuple[float, List[StringNgram]],
+    lm_score: Tuple[float, list[StringNgram]],
     tags: Sequence = (),
     match_table=(),
     baseform=False,
-) -> List[Tuple[float, paradigm.Paradigm, Iterable[str]]]:
+) -> list[Tuple[float, paradigm.Paradigm, Iterable[str]]]:
     res = []
     try:
         prior = math.log(para.count / float(numexamples))

@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple
+from typing import Optional, Tuple
 
 
 class MRegex:
@@ -20,11 +20,11 @@ class MRegex:
         self.regexlen = len(regex)
         self.text = ""
         self.textlen = 0
-        # self.matches: List = []
-        self.results: List[List[Tuple[int, int]]] = []
+        # self.matches: list = []
+        self.results: list[list[Tuple[int, int]]] = []
         self.matched = False
 
-    def findall(self, text: str) -> Optional[List[Tuple[str, ...]]]:
+    def findall(self, text: str) -> Optional[list[Tuple[str, ...]]]:
         strindex = 0
         regindex = 0
         self.text = text
@@ -37,7 +37,7 @@ class MRegex:
         return None
 
     def match(
-        self, strindex: int, regindex: int, groups: List[Tuple[int, int]]
+        self, strindex: int, regindex: int, groups: list[Tuple[int, int]]
     ) -> None:
         # Are we at end of regex _1and_ text?
         if strindex == self.textlen and regindex == self.regexlen:

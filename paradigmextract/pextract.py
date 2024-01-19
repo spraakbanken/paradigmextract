@@ -1,13 +1,13 @@
 import functools
 import itertools
 import re
-from typing import List, Tuple
+from typing import Tuple
 
 import paradigmextract.paradigm as paradigm
 
 
 def learnparadigms(
-    inflectiontables: List[Tuple[List[str], List[List[Tuple[str, str]]]]]
+    inflectiontables: list[Tuple[list[str], list[list[Tuple[str, str]]]]]
 ):
     vartables = []
     table_limit = 16
