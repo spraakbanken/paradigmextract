@@ -161,11 +161,11 @@ clean:
 #	cd src;python cexp.py ../paradigms/fi_nounadj_train_dev.p ../data/fi_nounadj_test.txt > ../output/fi_nounadj.txt
 #	tail -n 3 output/*
 ifeq (${VIRTUAL_ENV},)
-  VENV_NAME= .venv
-  INVENV=rye run
+  VENV_NAME = .venv
+  INVENV = rye run
 else
-  VENV_NAME= ${VIRTUAL_ENV}
-  INVENV=
+  VENV_NAME = ${VIRTUAL_ENV}
+  INVENV =
 endif
 
 install-dev:
@@ -173,6 +173,8 @@ install-dev:
 
 PROJECT := paradigmextract
 PROJECT_SRC := paradigmextract
+PLATFORM := ${shell uname -o}
+
 default_cov := "--cov=paradigmextract"
 cov_report := "term-missing"
 cov := ${default_cov}
@@ -180,9 +182,12 @@ cov := ${default_cov}
 all_tests := tests
 tests := tests
 
+${info Platform: ${PLATFORM}}
+${info Using ${VENV_NAME}}
+
 .PHONY: test
 test: 
-	${INVENV_NAME} pytest -vv ${tests}
+	${INVENV} pytest -vv ${tests}
 
 
 .PHONY: doc-tests
