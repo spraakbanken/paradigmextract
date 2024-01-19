@@ -53,4 +53,5 @@ jobs:
       - name: Build distribution
         run: rye build
       - name: Publish package to PyPI
+        if: github.repository == 'spraakbanken/paradigmextract' && startsWith(github.ref, 'refs/tags/v')
         uses: pypa/gh-action-pypi-publish@release/v1
