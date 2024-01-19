@@ -240,7 +240,7 @@ class Form:
                     break
             if m_all:
                 result.append((self.scount + vcount, vs))
-        return None if result else result
+        return result or None
 
     def strs(self) -> List[str]:
         """Collects the strings in a wordform.
