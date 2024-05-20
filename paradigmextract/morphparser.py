@@ -4,7 +4,7 @@ import functools
 import math
 import operator
 from collections.abc import Iterable, Sequence
-from typing import Any, Optional, Union, tuple
+from typing import Any, Optional, Union
 
 from paradigmextract import paradigm
 
