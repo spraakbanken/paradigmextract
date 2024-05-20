@@ -36,9 +36,7 @@ class MRegex:
             return [tuple(self.text[i:j] for i, j in r) for r in self.results]
         return None
 
-    def match(
-        self, strindex: int, regindex: int, groups: list[Tuple[int, int]]
-    ) -> None:
+    def match(self, strindex: int, regindex: int, groups: list[Tuple[int, int]]) -> None:
         # Are we at end of regex _1and_ text?
         if strindex == self.textlen and regindex == self.regexlen:
             self.matched = True

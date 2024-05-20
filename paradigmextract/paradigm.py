@@ -54,9 +54,9 @@ class Paradigm:
             self._p_info["count"] = 0
         else:
             if not self.p_id:
-                self._p_info[
-                    "name"
-                ] = f"p_{self.__call__(*[s for _, s in self.var_insts[0][1:]])[0][0]}"
+                self._p_info["name"] = (
+                    f"p_{self.__call__(*[s for _, s in self.var_insts[0][1:]])[0][0]}"
+                )
             self._p_info["count"] = len(self.var_insts)
             self._p_info["members"] = [var[0][1] for var in self.var_insts]
         self._p_info["slots"] = self.__slots()
@@ -76,9 +76,7 @@ class Paradigm:
         var_slots = list(vt.items())
         var_slots.sort(key=lambda x: x[0])
         (s_index, v_index) = (0, 0)
-        for i in range(
-            len(str_slots) + len(var_slots)
-        ):  # interleave strings and variables
+        for i in range(len(str_slots) + len(var_slots)):  # interleave strings and variables
             if i % 2 == 0:
                 slts.append((False, str_slots[s_index]))
                 s_index += 1
@@ -180,9 +178,7 @@ class Form:
         self.v_regex = []
         for ss in collect_vars.values():
             try:
-                self.v_regex.append(
-                    re.compile(genregex.Genregex(ss, pvalue=0.05).pyregex())
-                )
+                self.v_regex.append(re.compile(genregex.Genregex(ss, pvalue=0.05).pyregex()))
             except:
                 logging.error(f"error reading {ss}!")
                 raise
@@ -207,9 +203,7 @@ class Form:
             return False
         return self.match_vars(w, constrained) is not None
 
-    def match_vars(
-        self, w: str, constrained: bool = True
-    ) -> Optional[list[Tuple[int, Any]]]:
+    def match_vars(self, w: str, constrained: bool = True) -> Optional[list[Tuple[int, Any]]]:
         print(f"paradigm.Form.match_vars(w={w},constrained={constrained})")
         print(f"paradigm.Form.match_vars: self.regex = {self.regex}")
         matcher = regexmatcher.MRegex(self.regex)
@@ -223,9 +217,7 @@ class Form:
         result = []
         for vs in ms:
             var_and_reg = (
-                [(vs, self.v_regex[0])]
-                if isinstance(vs, str)
-                else zip(vs, self.v_regex)
+                [(vs, self.v_regex[0])] if isinstance(vs, str) else zip(vs, self.v_regex)
             )
             vcount = 0
             m_all = True

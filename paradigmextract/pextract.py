@@ -6,9 +6,7 @@ from typing import Tuple
 import paradigmextract.paradigm as paradigm
 
 
-def learnparadigms(
-    inflectiontables: list[Tuple[list[str], list[list[Tuple[str, str]]]]]
-):
+def learnparadigms(inflectiontables: list[Tuple[list[str], list[list[Tuple[str, str]]]]]):
     vartables = []
     table_limit = 16
     for table, tagtable in inflectiontables:
@@ -18,9 +16,7 @@ def learnparadigms(
         result = functools.reduce(lambda x, y: x & y, wg)
         lcss = result.longestwords
         if not lcss:  # Table has no LCS - no variables
-            vartables.append(
-                (tablehead, taghead, [[table, table, table, [], 0, 0]], tagtable)
-            )
+            vartables.append((tablehead, taghead, [[table, table, table, [], 0, 0]], tagtable))
             continue
 
         combos = []
@@ -40,13 +36,9 @@ def learnparadigms(
             combinations = itertools.product(*factorlist)
             for c in combinations:
                 (numvars, variablelist) = _evalfact(lcs, c)
-                infixcount = functools.reduce(
-                    lambda x, y: x + _count_infix_segments(y), c, 0
-                )
+                infixcount = functools.reduce(lambda x, y: x + _count_infix_segments(y), c, 0)
                 variabletable = [_string_to_varstring(s, variablelist) for s in c]
-                combos.append(
-                    [table, c, variabletable, variablelist, numvars, infixcount]
-                )
+                combos.append([table, c, variabletable, variablelist, numvars, infixcount])
 
         vartables.append((tablehead, taghead, combos, tagtable))
 
@@ -84,9 +76,7 @@ class WordGraph:
 
     def __init__(self, transitions):
         self.alphabet = {symbol for (state, symbol) in transitions}
-        self.states = {state for (state, symbol) in transitions} | set(
-            transitions.values()
-        )
+        self.states = {state for (state, symbol) in transitions} | set(transitions.values())
         self.transitions = transitions
         self.revtrans = {}
         for state, sym in self.transitions:
@@ -124,9 +114,7 @@ class WordGraph:
                         statemap[(atarget, btarget)] = nextstate
                         nextstate += 1
                         stack.append((atarget, btarget))
-                    trans[(statemap[(asource, bsource)], sym)] = statemap[
-                        (atarget, btarget)
-                    ]
+                    trans[(statemap[(asource, bsource)], sym)] = statemap[(atarget, btarget)]
 
         return WordGraph(trans)
 
@@ -408,9 +396,7 @@ def _ffilter_leftmost_sum(factorlist):
             x
             for x in w
             if sum(i for i in range(len(x)) if x.startswith("[", i))
-            == min(
-                map(lambda x: sum(i for i in range(len(x)) if x.startswith("[", i)), w)
-            )
+            == min(map(lambda x: sum(i for i in range(len(x)) if x.startswith("[", i)), w))
         ]
         for w in factorlist
     ]

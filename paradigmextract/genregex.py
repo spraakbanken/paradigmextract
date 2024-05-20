@@ -1,5 +1,4 @@
 class Genregex:
-
     """Generalizes a list of strings into a regex.
     The main strategy is to find those complete strings, suffixes, or
     prefixes in the set that seem to be restricted in their distribution
