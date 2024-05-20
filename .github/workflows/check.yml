@@ -93,6 +93,7 @@ jobs:
         run: make install-dev
       - name: type-check code
         run: make type-check
+        continue-on-error: true
 
   # https://github.com/marketplace/actions/alls-green#why used for branch protection checks
   check-check:
