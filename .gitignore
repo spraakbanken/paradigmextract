@@ -8,3 +8,4 @@ __pycache__
 .vscode/
 requirements-dev.lock
 requirements.lock
+.pdm-python
