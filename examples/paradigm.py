@@ -1,31 +1,27 @@
 import codecs
 import json
 import sys
-from typing import Any, Dict, List
+from typing import Any, dict, list
 
-import paradigmextract.paradigm as paradigm
+from paradigmextract import paradigm
 
 
-def load_json_file(file: str, lex: str = "", pos: str = "") -> List[paradigm.Paradigm]:
+def load_json_file(file: str, lex: str = "", pos: str = "") -> list[paradigm.Paradigm]:
     try:
-        return load_json(
-            json.load(codecs.open(file, encoding="utf-8")), lex=lex, pos=pos
-        )
+        return load_json(json.load(codecs.open(file, encoding="utf-8")), lex=lex, pos=pos)
     except Exception as e:
         print(f"Could not read json file {e}")
         raise
 
 
 def load_json(
-    objs: List[Dict[str, Any]], lex: str = "", pos: str = ""
-) -> List[paradigm.Paradigm]:
+    objs: list[dict[str, Any]], lex: str = "", pos: str = ""
+) -> list[paradigm.Paradigm]:
     paradigms = []
     obj_no = 1
     try:
         for paradigm in objs:
-            var_insts = [
-                list(inst.items()) for inst in paradigm.get("VariableInstances", [])
-            ]
+            var_insts = [list(inst.items()) for inst in paradigm.get("VariableInstances", [])]
             p_id = paradigm.get("MorphologicalPatternID", "")
             uuid = paradigm.get("_uuid", "")
             form_msd = []
@@ -35,7 +31,7 @@ def load_json(
             #     for key, val in paradigm.get("TransformCategory", {}).items()
             # }
 
-            for transform in paradigm.get("TransformSet", []):
+            for transform in paradigm.get("Transformset", []):
                 f = []
                 for p in transform.get("Process", []):
                     # TODO check processType? and operator?
@@ -102,10 +98,8 @@ def jsonify_paradigm(paradigm_obj):
                 v = "first-attest"
             paradigm["VariableInstances"][-1][v] = i
 
-    paradigm["TransformCategory"] = {
-        key: list(mem) for key, mem in paradigm_obj.classes.items()
-    }
-    paradigm["TransformSet"] = [
+    paradigm["TransformCategory"] = {key: list(mem) for key, mem in paradigm_obj.classes.items()}
+    paradigm["Transformset"] = [
         jsonify_form(form) for form in paradigm_obj.forms if not form.identifier
     ]
     return paradigm
@@ -115,7 +109,7 @@ def pr(i, b):
     return "[v] %d" % i if b else "[s] %d" % i
 
 
-def load_p_file(file: str, pos: str = "", lex: str = "") -> List[paradigm.Paradigm]:
+def load_p_file(file: str, pos: str = "", lex: str = "") -> list[paradigm.Paradigm]:
     paradigms = []
     line_no = 1
     with codecs.open(file, encoding="utf-8") as f:
@@ -123,7 +117,7 @@ def load_p_file(file: str, pos: str = "", lex: str = "") -> List[paradigm.Paradi
             for l in f:
                 try:
                     (p, ex) = l.strip().split("\t")
-                except Exception:  # noqa: BLE001
+                except Exception:
                     p = l.strip()
                     ex = ""
                 p_members = []
@@ -145,9 +139,7 @@ def load_p_file(file: str, pos: str = "", lex: str = "") -> List[paradigm.Paradi
             raise
     paradigms.sort(reverse=True)
     return [
-        paradigm.Paradigm(
-            wfs, p_members, "p%d_%s" % (i, p_members[0][0][1]), pos=pos, lex=lex
-        )
+        paradigm.Paradigm(wfs, p_members, "p%d_%s" % (i, p_members[0][0][1]), pos=pos, lex=lex)
         for (i, (_, wfs, p_members)) in enumerate(paradigms, 1)
     ]
 

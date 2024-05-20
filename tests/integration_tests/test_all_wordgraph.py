@@ -1,12 +1,14 @@
 import functools
 import json
+import operator
 import os
+
 from paradigmextract.pextract import WordGraph
 
 
 def get_lcs(table):
     wg = [WordGraph.from_string(x) for x in table]
-    result = functools.reduce(lambda x, y: x & y, wg)
+    result = functools.reduce(operator.and_, wg)
     return result.longestwords
 
 

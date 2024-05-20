@@ -1,5 +1,11 @@
+"""Genregex."""
+
+import operator
+
+
 class Genregex:
     """Generalizes a list of strings into a regex.
+
     The main strategy is to find those complete strings, suffixes, or
     prefixes in the set that seem to be restricted in their distribution
     and issue a regular expression (Python or foma), that matches a limited
@@ -30,7 +36,7 @@ class Genregex:
     ^(?=.*(a|b)$)(?=.{1,2}$)(a|b)
     """
 
-    def __init__(self, strings: list[str], pvalue: float = 0.05, length: bool = True):
+    def __init__(self, strings: list[str], pvalue: float = 0.05, length: bool = True) -> None:  # noqa: D107
         self.strings = strings
         self.numstrings = len(self.strings)
         self.pvalue = pvalue
@@ -48,24 +54,24 @@ class Genregex:
             return
         # Case (2a): find longest suffix that has limited distribution
         for i in range(-self.minlen, 0):
-            suffstrings = map(lambda x: x[i:], self.strings)
+            suffstrings = map(operator.itemgetter(slice(i, None)), self.strings)
             if self._significancetest(len(list(suffstrings)), len(set(suffstrings))):
                 self.suffixset = set(suffstrings)
                 break
         # Case (2b): find longest prefix that has limited distribution
         for i in range(self.minlen, 0, -1):
-            prefstrings = map(lambda x: x[:i], self.strings)
+            prefstrings = map(operator.itemgetter(slice(i)), self.strings)
             if self._significancetest(len(list(prefstrings)), len(set(prefstrings))):
                 self.prefixset = set(prefstrings)
                 break
         # Case (2c): find out if stringlengths have limited distribution
         if self.length:
-            stringlengths = set(map(lambda x: len(x), self.strings))
+            stringlengths = {len(x) for x in self.strings}
             if self._significancetest(self.numstrings, len(stringlengths)):
                 self.lenrange = (self.minlen, self.maxlen)
         return
 
-    def pyregex(self):
+    def pyregex(self):  # noqa: ANN201, D102
         # ^(?=.*suffix$)(?=.{min,max}$)prefix
         re = ""
         if len(self.stringset) > 0:
@@ -78,5 +84,5 @@ class Genregex:
             re += "(" + "|".join(self.prefixset) + ")"
         return f"^{re}" if re else ".+"
 
-    def _significancetest(self, num: int, uniq: int):
+    def _significancetest(self, num: int, uniq: int):  # noqa: ANN202
         return (1.0 - (1.0 / (uniq + 1.0))) ** num <= self.pvalue

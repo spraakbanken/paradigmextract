@@ -1,5 +1,6 @@
 import json
 import os
+
 from paradigmextract.pextract import learnparadigms
 
 
@@ -8,7 +9,7 @@ def test_all():
     with open(join) as fp:
         test_tables = json.load(fp)
         final_tables = []
-        assert 9943 == len(test_tables)
+        assert len(test_tables) == 9943
         for table in test_tables:
             msds_ = table["msds"]
             tags = []

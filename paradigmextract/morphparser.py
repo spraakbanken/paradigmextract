@@ -1,11 +1,15 @@
+"""Morph parser."""
+
 import functools
 import math
-from typing import Any, Iterable, Optional, Sequence, Tuple, Union
+import operator
+from collections.abc import Iterable, Sequence
+from typing import Any, Optional, Union, tuple
 
-import paradigmextract.paradigm as paradigm
+from paradigmextract import paradigm
 
 
-class StringNgram:
+class StringNgram:  # noqa: D101
     def __init__(
         self,
         stringset: list[str],
@@ -29,11 +33,11 @@ class StringNgram:
         for mgram in mgrams:
             self.ngramcounts[mgram] = self.ngramcounts.get(mgram, 0) + 1
 
-    def evaluate(self, string: str) -> float:
+    def evaluate(self, string: str) -> float:  # noqa: D102
         s = "#" * (self.order - 1) + string + "#"
         return sum(self._getprob(x) for x in self._letter_ngrams(s, self.order))
 
-    def _getprob(self, ngram) -> float:
+    def _getprob(self, ngram) -> float:  # noqa: ANN001
         numerator = self.ngramcounts.get(ngram, 0) + self.ngramprior
         denominator = self.ngramcounts.get(ngram[:-1], 0) + len(self.alphabet) * self.ngramprior
         return math.log(numerator / float(denominator))
@@ -44,7 +48,7 @@ class StringNgram:
 
 
 def _paradigms_to_alphabet(paradigms: list[paradigm.Paradigm]) -> set[str]:
-    """Extracts all used symbols from an iterable of paradigms."""
+    """Extract all used symbols from an iterable of paradigms."""
     alphabet = set()
     for para in paradigms:
         for _, slot in para.slots:
@@ -53,7 +57,7 @@ def _paradigms_to_alphabet(paradigms: list[paradigm.Paradigm]) -> set[str]:
     return alphabet - {"_"}
 
 
-def _eval_vars(matches: list[str], lm: Tuple[float, list[StringNgram]]):
+def _eval_vars(matches: list[str], lm: tuple[float, list[StringNgram]]):  # noqa: ANN202
     if not lm[1]:
         # If paradigm does not have any instances.
         # This may happen if the paradigms are not updated
@@ -68,8 +72,8 @@ def eval_multiple_entries(
     words: list[str],
     tags: Sequence[str] = (),
     baseform: bool = False,
-) -> set[Tuple[int, Any]]:
-    """Returns a set of consistent variable assignment to all words."""
+) -> set[tuple[int, Any]]:
+    """Return a set of consistent variable assignment to all words."""
     wmatches: list[set] = []
     for ix, w in enumerate(words):
         tag = tags[ix] if len(tags) > ix else ""
@@ -78,13 +82,13 @@ def eval_multiple_entries(
         matches = p.match(w, constrained=False, tag=tag, baseform=restrict)
         for m in filter(lambda x: x is not None, matches):
             if not m:
-                m = [(0, ())]  # Add dummy to show match is exact without vars
+                m = [(0, ())]  # Add dummy to show match is exact without vars  # noqa: PLW2901
             for submatch in m:
                 if len(submatch) > 0:
                     wmatch.add(submatch[1])
         wmatches.append(wmatch)
 
-    def _union(x, y):
+    def _union(x, y):  # noqa: FURB118, ANN202, ANN001
         return x & y
 
     return functools.reduce(_union, wmatches)
@@ -93,14 +97,14 @@ def eval_multiple_entries(
 def eval_baseform(
     p: paradigm.Paradigm, word: str, possible_tags: Sequence[str] = ()
 ) -> Optional[list[str]]:
-    """Returns a set of variable assignment for word in the first tag that matches"""
+    """Return a set of variable assignment for word in the first tag that matches."""
 
-    def inner(tag: str = ""):
+    def inner(tag: str = ""):  # noqa: ANN202
         baseform = not tag
         matches = p.match(word, constrained=False, tag=tag, baseform=baseform)
         for m in filter(lambda x: x is not None, matches):
             if not m:
-                m = [(0, ())]  # Add dummy to show match is exact without vars
+                m = [(0, ())]  # Add dummy to show match is exact without vars  # noqa: PLW2901
             for submatch in m:
                 if len(submatch) > 0:
                     return submatch[1]
@@ -116,20 +120,25 @@ def eval_baseform(
     return None
 
 
-def build(
-    paradigms, ngramorder: int, ngramprior: float
-) -> Tuple[list[paradigm.Paradigm], int, dict[str, Tuple[float, list[StringNgram]]], set[str]]:
+def build(  # noqa: D103
+    paradigms,  # noqa: ANN001
+    ngramorder: int,
+    ngramprior: float,
+) -> tuple[list[paradigm.Paradigm], int, dict[str, tuple[float, list[StringNgram]]], set[str]]:
     alphabet = _paradigms_to_alphabet(paradigms)
 
-    numexamples = sum(map(lambda x: x.count, paradigms))
+    numexamples = sum(x.count for x in paradigms)
 
     lms = {p.uuid: _lms_paradigm(p, alphabet, ngramorder, ngramprior) for p in paradigms}
     return paradigms, numexamples, lms, alphabet
 
 
 def _lms_paradigm(
-    paradigm_, alphabet, ngramorder, ngramprior
-) -> Tuple[float, list[StringNgram]]:
+    paradigm_,  # noqa: ANN001
+    alphabet,  # noqa: ANN001
+    ngramorder,  # noqa: ANN001
+    ngramprior,  # noqa: ANN001
+) -> tuple[float, list[StringNgram]]:
     numvars = (len(paradigm_.slots) - 1) / 2
     slotmodels = []
     for v in range(int(numvars)):
@@ -139,11 +148,11 @@ def _lms_paradigm(
     return numvars, slotmodels
 
 
-def test_paradigms(
-    inp: Union[list[str], Tuple[list[str], list[str]]],
+def test_paradigms(  # noqa: ANN201, D103
+    inp: Union[list[str], tuple[list[str], list[str]]],
     paradigms: list[paradigm.Paradigm],
     numexamples: int,
-    lms: dict[str, Tuple[float, list[StringNgram]]],
+    lms: dict[str, tuple[float, list[StringNgram]]],
     pprior: float,
     match_all: bool = False,
     baseform: bool = False,
@@ -197,20 +206,20 @@ def test_paradigms(
             )
         )
 
-    analyses.sort(reverse=True, key=lambda x: x[0])
+    analyses.sort(reverse=True, key=operator.itemgetter(0))
     return analyses
 
 
-def run_paradigms(
-    fittingparadigms,
-    words,
-    kbest=1,
-    pprior=0,
-    lms=None,
-    numexamples=1,
-    baseform=False,
-    tags=(),
-) -> list[Tuple[float, paradigm.Paradigm, Iterable[str]]]:
+def run_paradigms(  # noqa: D103
+    fittingparadigms,  # noqa: ANN001
+    words,  # noqa: ANN001
+    kbest=1,  # noqa: ANN001
+    pprior=0,  # noqa: ANN001
+    lms=None,  # noqa: ANN001
+    numexamples=1,  # noqa: ANN001
+    baseform=False,  # noqa: ANN001
+    tags=(),  # noqa: ANN001
+) -> list[tuple[float, paradigm.Paradigm, Iterable[str]]]:
     if lms is None:
         lms = {}
     analyses = []
@@ -224,16 +233,16 @@ def run_paradigms(
     return analyses
 
 
-def test_paradigm(
+def test_paradigm(  # noqa: D103
     para: paradigm.Paradigm,
     words: list[str],
     numexamples: int,
     pprior: float,
-    lm_score: Tuple[float, list[StringNgram]],
+    lm_score: tuple[float, list[StringNgram]],
     tags: Sequence = (),
-    match_table=(),
-    baseform=False,
-) -> list[Tuple[float, paradigm.Paradigm, Iterable[str]]]:
+    match_table=(),  # noqa: ANN001
+    baseform=False,  # noqa: ANN001
+) -> list[tuple[float, paradigm.Paradigm, Iterable[str]]]:
     res = []
     try:
         prior = math.log(para.count / float(numexamples))
@@ -244,15 +253,14 @@ def test_paradigm(
     if len(variables) == 0:
         score = prior
         return [(score, para, ())]
-    else:
-        for v in variables:
-            score = prior * pprior + len(words) * _eval_vars(v, lm_score)
-            res.append((score, para, v))
+    for v in variables:
+        score = prior * pprior + len(words) * _eval_vars(v, lm_score)
+        res.append((score, para, v))
 
-    def match(_p, _v, table):
+    def match(_p, _v, table):  # noqa: ANN202, ANN001
         try:
             return _p(*_v) == table
-        except Exception:  # noqa: BLE001
+        except Exception:
             return False
 
     if match_table:

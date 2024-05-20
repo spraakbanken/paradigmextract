@@ -1,6 +1,5 @@
 import pytest
 
-
 from paradigmextract.paradigm import Paradigm
 
 
@@ -14,9 +13,9 @@ def test_1():
     p = Paradigm(form_msds, var_insts)
     tag = ("msd", "sg indef nom")
     matches = p.match("apa", constrained=False, tag=tag, baseform=True)
-    assert [None] == matches
+    assert matches == [None]
     matches = p.match("vad", constrained=False, tag=tag, baseform=True)
-    assert [[(1, ("v", "d"))]] == matches
+    assert matches == [[(1, ("v", "d"))]]
 
 
 def test_2():
@@ -29,11 +28,11 @@ def test_2():
     p = Paradigm(form_msds, var_insts)
     var_insts = ["st", "d"]
     table = p(*var_insts)
-    assert [
+    assert table == [
         ("stad", ("msd", "sg indef nom")),
         ("städer", ("msd", "pl indef nom")),
         ("stads", ("msd", "sg indef gen")),
-    ] == table
+    ]
 
 
 @pytest.mark.xfail(reason="don't know")
@@ -45,4 +44,4 @@ def test_paradigm_match_vars():
     ]
     var_insts = [[("1", "b"), ("2", "d")]]
     p = Paradigm(form_msds, var_insts)
-    p.match_vars
+    _match_vars = p.match_vars

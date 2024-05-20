@@ -1,10 +1,10 @@
 import sys
-from typing import List, Tuple
+from typing import list, tuple
 
-import paradigmextract.pextract as pextract
+from paradigmextract import pextract
 
 
-def split_tags(tags: List) -> List[List[Tuple[str, str]]]:
+def split_tags(tags: list) -> list[list[tuple[str, str]]]:
     spl = [tg.split(",,") for tg in tags]
 
     newforms = []
@@ -26,9 +26,9 @@ def split_tags(tags: List) -> List[List[Tuple[str, str]]]:
 
 if __name__ == "__main__":
     lines = [l.strip() for l in sys.stdin]
-    tables: List[Tuple[List[str], List[List[Tuple[str, str]]]]] = []
-    thistable: List[str] = []
-    thesetags: List[str] = []
+    tables: list[tuple[list[str], list[list[tuple[str, str]]]]] = []
+    thistable: list[str] = []
+    thesetags: list[str] = []
     for l in lines:
         if l == "":
             if thistable:

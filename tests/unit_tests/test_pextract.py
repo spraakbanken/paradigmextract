@@ -1,6 +1,6 @@
-from paradigmextract.pextract import _longest_variable, _count_infix_segments
-
 import pytest
+
+from paradigmextract.pextract import _count_infix_segments, _longest_variable
 
 
 def test_longest_variable_with_empty_string_returns_0():

@@ -1,19 +1,21 @@
+"""Pextract."""
+
 import functools
 import itertools
+import operator
 import re
-from typing import Tuple
 
-import paradigmextract.paradigm as paradigm
+from paradigmextract import paradigm
 
 
-def learnparadigms(inflectiontables: list[Tuple[list[str], list[list[Tuple[str, str]]]]]):
+def learnparadigms(inflectiontables: list[tuple[list[str], list[list[tuple[str, str]]]]]):  # noqa: ANN201, D103
     vartables = []
     table_limit = 16
     for table, tagtable in inflectiontables:
         tablehead = table[0]
         taghead = tagtable[0]
         wg = [WordGraph.from_string(x) for x in table]
-        result = functools.reduce(lambda x, y: x & y, wg)
+        result = functools.reduce(operator.and_, wg)
         lcss = result.longestwords
         if not lcss:  # Table has no LCS - no variables
             vartables.append((tablehead, taghead, [[table, table, table, [], 0, 0]], tagtable))
@@ -45,28 +47,18 @@ def learnparadigms(inflectiontables: list[Tuple[list[str], list[list[Tuple[str, 
     filteredtables = []
 
     for idform, idtag, t, tags in vartables:
-        besttable = min(t, key=lambda s: (s[4], s[5]))
+        besttable = min(t, key=operator.itemgetter(4, 5))
         filteredtables.append((idform, idtag, besttable, tags))
 
     return _collapse_tables(filteredtables)
 
 
 class WordGraph:
-    """
-    Wordgraph class to extract LCS
+    """Wordgraph class to extract LCS.
+
     Convert word w to directed graph that contains all subsequences of w.
-    """
 
-    @classmethod
-    def from_string(cls, word: str):
-        trans = {}
-        for i in range(len(word)):
-            for j in range(i, len(word)):
-                if (i, word[j]) not in trans:
-                    trans[(i, word[j])] = j + 1
-        return cls(trans)
-
-    """Simple directed graph class where graphs are special types of automata
+    Simple directed graph class where graphs are special types of automata
        where each state is a final state.
        This is used to quickly find the LCS of a large number of words by
        first converting each word w to an automaton that accepts all substrings
@@ -74,7 +66,16 @@ class WordGraph:
        longest path(s) extracted from the result with _maxpath().
     """
 
-    def __init__(self, transitions):
+    @classmethod
+    def from_string(cls, word: str):  # noqa: ANN206, D102
+        trans = {}
+        for i in range(len(word)):
+            for j in range(i, len(word)):
+                if (i, word[j]) not in trans:
+                    trans[(i, word[j])] = j + 1
+        return cls(trans)
+
+    def __init__(self, transitions) -> None:  # noqa: D107, ANN001
         self.alphabet = {symbol for (state, symbol) in transitions}
         self.states = {state for (state, symbol) in transitions} | set(transitions.values())
         self.transitions = transitions
@@ -85,16 +86,16 @@ class WordGraph:
             else:
                 self.revtrans[self.transitions[(state, sym)]] = {(state, sym)}
 
-    def __getattr__(self, attr):
+    def __getattr__(self, attr):  # noqa: D105, ANN204, ANN001
         if attr == "longestwords":
             self._maxpath()
             return self.longestwords
-        raise AttributeError("%r object has no attribute %r" % (self.__class__, attr))
+        raise AttributeError(f"{self.__class__!r} object has no attribute {attr!r}")
 
-    def __and__(self, other):
+    def __and__(self, other):  # noqa: D105, ANN204, ANN001
         return self._intersect(other)
 
-    def _intersect(self, other):
+    def _intersect(self, other):  # noqa: ANN202, ANN001
         """Calculate intersection of two directed graphs."""
         alphabet = self.alphabet & other.alphabet
         stack = [(0, 0)]
@@ -118,7 +119,7 @@ class WordGraph:
 
         return WordGraph(trans)
 
-    def _backtrace(self, maxsources, maxlen, state, tempstring):
+    def _backtrace(self, maxsources, maxlen, state, tempstring) -> None:  # noqa: ANN001
         if state not in self.revtrans:
             tempstring.reverse()
             self.longestwords.append("".join(tempstring))
@@ -127,9 +128,8 @@ class WordGraph:
             if maxlen[backstate] == maxlen[state] - 1:
                 self._backtrace(maxsources, maxlen, backstate, [*tempstring, symbol])
 
-    def _maxpath(self):
-        """Returns a list of strings that represent the set of longest words
-        accepted by the automaton."""
+    def _maxpath(self) -> None:
+        """Return a list of strings that represent the set of longest words accepted by the automaton."""  # noqa: E501
         tr = {}
         # Create tr which simply has graph structure without symbols
         for state, sym in self.transitions:
@@ -137,7 +137,7 @@ class WordGraph:
                 tr[state] = set()
             tr[state].update({self.transitions[(state, sym)]})
 
-        S = {0}
+        S = {0}  # noqa: N806
         maxlen = {}
         maxsources = {}
         for i in self.states:
@@ -146,7 +146,7 @@ class WordGraph:
 
         step = 1
         while S:
-            Snew = set()
+            Snew = set()  # noqa: N806
             for state in S:
                 if state in tr:
                     for target in tr[state]:
@@ -156,7 +156,7 @@ class WordGraph:
                             Snew.update({target})
                         elif maxlen[target] == step:
                             maxsources[target] |= {state}
-            S = Snew
+            S = Snew  # noqa: N806
             step += 1
 
         endstates = [key for key, val in maxlen.items() if val == max(maxlen.values())]
@@ -166,9 +166,10 @@ class WordGraph:
 
 
 def _longest_variable(string: str) -> int:
-    """Computes the longest variable in the input.
+    """Compute the longest variable in the input.
 
-    Example: _longest_variable("test[a]") == 1
+    >>> _longest_variable("test[a]")
+    1
 
     Args:
         string (str): the string to analyze
@@ -192,7 +193,7 @@ def _longest_variable(string: str) -> int:
 
 
 def _count_infix_segments(string: str) -> int:
-    """Counts total number of infix segments, ignores @-strings."""
+    """Count total number of infix segments, ignores @-strings."""
     if "[" not in string:
         return 0
     if "@" in string:
@@ -203,7 +204,7 @@ def _count_infix_segments(string: str) -> int:
     return len(nobrackets)
 
 
-def _string_to_varstring(string, variables):
+def _string_to_varstring(string, variables):  # noqa: ANN202, ANN001
     varpos = 0
     s = []
     idx = 0
@@ -224,27 +225,27 @@ def _string_to_varstring(string, variables):
     return "".join(s)
 
 
-def _lcp(lst):
-    """Returns the longest common prefix from a list."""
+def _lcp(lst):  # noqa: ANN202, ANN001
+    """Return the longest common prefix from a list."""
     if not lst:
         return ""
-    cleanlst = list(map(lambda x: x.replace("[", "").replace("]", ""), lst))
+    cleanlst = [x.replace("[", "").replace("]", "") for x in lst]
     s1 = min(cleanlst)
     s2 = max(cleanlst)
-    for i, c in enumerate(s1):
-        if c != s2[i]:
-            return s1[:i]
-    return s1
+    return next((s1[:i] for i, c in enumerate(s1) if c != s2[i]), s1)
 
 
-def _firstvarmatch(string, prefix) -> bool:
+def _firstvarmatch(string, prefix) -> bool:  # noqa: ANN001
     """See if first var is exactly prefix."""
     return string[1 : 1 + len(prefix)] == prefix
 
 
-def _evalfact(lcs, c):
-    """Input: a list of variable-bracketed strings, the known LCS
-    Output: number of variables needed and the variables themselves in a list."""
+def _evalfact(lcs, c):  # noqa: ANN001, ANN202
+    """evalfact.
+
+    Input: a list of variable-bracketed strings, the known LCS
+    Output: number of variables needed and the variables themselves in a list.
+    """
     allbreaks = []
     for w in c:
         breaks = [0] * len(lcs)
@@ -279,14 +280,13 @@ def _evalfact(lcs, c):
     return numvars, variables
 
 
-def _findfactors(word, lcs):
+def _findfactors(word, lcs):  # noqa: ANN202, ANN001
     """Recursively finds the different ways to place an LCS in a string."""
-
     word = list(word)
     lcs = list(lcs)
     factors = []
 
-    def rec(word, lcs, posw, posl, inmatch, tempstring):
+    def rec(word, lcs, posw, posl, inmatch, tempstring) -> None:  # noqa: ANN001
         if posw == len(word) and posl != len(lcs):
             return
         if posw != len(word) and posl == len(lcs):
@@ -315,17 +315,20 @@ def _findfactors(word, lcs):
             rec(word, lcs, posw + 1, posl, 0, [*tempstring, word[posw]])
 
     rec(word, lcs, 0, 0, 0, [])
-    return factors[:]
+    return factors.copy()
 
 
-def _vars_to_string(baseform, varlist):
+def _vars_to_string(baseform, varlist):  # noqa: ANN202, ANN001
     vstr = [(str(idx + 1), v) for idx, v in enumerate(varlist)]
     return [("first-attest", baseform), *vstr]
 
 
-def _collapse_tables(tables):
-    """Input: list of tables
-    Output: Collapsed paradigms."""
+def _collapse_tables(tables):  # noqa: ANN202, ANN001
+    """Collapse tables.
+
+    Input: list of tables
+    Output: Collapsed paradigms.
+    """
     paradigms = []
     collapsedidx = set()  # Store indices to collapsed tables
     for idx, tab in enumerate(tables):
@@ -346,64 +349,62 @@ def _collapse_tables(tables):
         try:
             p = paradigm.Paradigm(formlist, varstring)
         except:
-            print(formlist)
-            print(varstring)
+            print(formlist)  # noqa: T201
+            print(varstring)  # noqa: T201
             raise
         paradigms.append(p)
     return paradigms
 
 
-def _ffilter_lcp(factorlist):
-    def flatten(x):
-        return [y for l in x for y in flatten(l)] if isinstance(x, list) else [x]
+def _ffilter_lcp(factorlist):  # noqa: ANN202, ANN001
+    def flatten(x):  # noqa: ANN202, ANN001
+        return [y for l in x for y in flatten(l)] if isinstance(x, list) else [x]  # noqa: E741
 
     lcprefix = _lcp(flatten(factorlist))
-    factorlist = [[x for x in w if _firstvarmatch(x, lcprefix)] for w in factorlist]
-    return factorlist
+    return [[x for x in w if _firstvarmatch(x, lcprefix)] for w in factorlist]
 
 
-def _ffilter_shortest_string(factorlist):
+def _ffilter_shortest_string(factorlist):  # noqa: ANN202, ANN001
     return [[x for x in w if len(x) == len(min(w, key=len))] for w in factorlist]
 
 
-def _ffilter_shortest_infix(factorlist):
+def _ffilter_shortest_infix(factorlist):  # noqa: ANN202, ANN001
     return [
         [
             x
             for x in w
             if _count_infix_segments(x)
-            == _count_infix_segments(min(w, key=lambda x: _count_infix_segments(x)))
+            == _count_infix_segments(min(w, key=_count_infix_segments))
         ]
         for w in factorlist
     ]
 
 
-def _ffilter_longest_single_var(factorlist):
+def _ffilter_longest_single_var(factorlist):  # noqa: ANN202, ANN001
     return [
         [
             x
             for x in w
-            if _longest_variable(x)
-            == _longest_variable(max(w, key=lambda x: _longest_variable(x)))
+            if _longest_variable(x) == _longest_variable(max(w, key=_longest_variable))
         ]
         for w in factorlist
     ]
 
 
-def _ffilter_leftmost_sum(factorlist):
+def _ffilter_leftmost_sum(factorlist):  # noqa: ANN202, ANN001
     return [
         [
             x
             for x in w
             if sum(i for i in range(len(x)) if x.startswith("[", i))
-            == min(map(lambda x: sum(i for i in range(len(x)) if x.startswith("[", i)), w))
+            == min(sum(i for i in range(len(x)) if x.startswith("[", i)) for x in w)
         ]
         for w in factorlist
     ]
 
 
-def _filterbracketings(factorlist, functionlist, tablecap):
-    def numcombinations(f):
+def _filterbracketings(factorlist, functionlist, tablecap):  # noqa: ANN202, ANN001
+    def numcombinations(f):  # noqa: ANN202, ANN001
         return functools.reduce(lambda x, y: x * len(y), f, 1)
 
     if numcombinations(factorlist) > tablecap:

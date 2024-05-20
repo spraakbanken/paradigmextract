@@ -23,26 +23,36 @@
 # coges	person=2nd,number=singular,tense=present,mood=indicative
 # coge	person=3rd,number=singular,tense=present,mood=indicative
 # ...
-from typing import Tuple, List, Dict, Set
-import sys
 import getopt
 import json
+import sys
+from typing import dict, list, set, tuple
 
-import paradigmextract.morphparser as morphparser
-import paradigmextract.paradigm as paradigm
+from paradigmextract import morphparser, paradigm
 
 
-def build(inpfile: str, ngramorder: int, ngramprior: float, small: bool = False, lexicon: str = '',
-          inpformat: str = 'pfile',
-          pos: str = '') -> Tuple[List[paradigm.Paradigm], int, Dict[str, Tuple[float, List[morphparser.StringNgram]]], Set[str]]:
-    if inpformat == 'pfile':
+def build(
+    inpfile: str,
+    ngramorder: int,
+    ngramprior: float,
+    small: bool = False,
+    lexicon: str = "",
+    inpformat: str = "pfile",
+    pos: str = "",
+) -> tuple[
+    list[paradigm.Paradigm],
+    int,
+    dict[str, tuple[float, list[morphparser.StringNgram]]],
+    set[str],
+]:
+    if inpformat == "pfile":
         paradigms = paradigm.load_p_file(inpfile, lex=lexicon)
-    elif inpformat == 'jsonfile':
+    elif inpformat == "jsonfile":
         paradigms = paradigm.load_json_file(inpfile, lex=lexicon, pos=pos)
-    elif inpformat == 'json':
+    elif inpformat == "json":
         paradigms = paradigm.load_json(json.loads(inpfile), lex=lexicon, pos=pos)
     else:
-        raise RuntimeError('Wrong input format')
+        raise RuntimeError("Wrong input format")
 
     # lexicon is removed from build in morphparser
 
@@ -50,9 +60,9 @@ def build(inpfile: str, ngramorder: int, ngramprior: float, small: bool = False,
 
 
 def main(argv):
-
-    options, remainder = getopt.gnu_getopt(argv[1:], 'tk:n:p:dr:c',
-                                           ['tables', 'kbest', 'ngram', 'prior', 'debug', 'pprior'])
+    options, remainder = getopt.gnu_getopt(
+        argv[1:], "tk:n:p:dr:c", ["tables", "kbest", "ngram", "prior", "debug", "pprior"]
+    )
 
     print_tables = False
     kbest = 1
@@ -61,21 +71,19 @@ def main(argv):
     debug = False
     pprior = 1.0
     for opt, arg in options:
-        if opt in ('-t', '--tables'):
+        if opt in ("-t", "--tables"):
             print_tables = True
-        elif opt in ('-k', '--kbest'):
+        elif opt in ("-k", "--kbest"):
             kbest = int(arg)
-        elif opt in ('-n', '--ngram'):
+        elif opt in ("-n", "--ngram"):
             ngramorder = int(arg)
-        elif opt in ('-p', '--prior'):
+        elif opt in ("-p", "--prior"):
             ngramprior = float(arg)
-        elif opt in ('-d', '--debug'):
+        elif opt in ("-d", "--debug") or opt in ("-d", "--debug"):
             debug = True
-        elif opt in ('-d', '--debug'):
-            debug = True
-        elif opt in ('-r', '--pprior'):
+        elif opt in ("-r", "--pprior"):
             pprior = float(arg)
-    inp = iter(lambda: sys.stdin.readline().decode('utf-8'), '')
+    inp = iter(lambda: sys.stdin.readline().decode("utf-8"), "")
     paras, numexamples, lms, alphabet = build(sys.argv[1], ngramorder, ngramprior)
     res = []
     for line in inp:
@@ -86,21 +94,35 @@ def main(argv):
         for aindex, (score, p, v) in enumerate(analyses):
             if aindex >= kbest:
                 break
-            varstring = '(' + ','.join([str(feat) + '=' + val for feat, val in zip(range(1, len(v)+1), v)]) + ')'
-            table = p(*v)          # Instantiate table with vars from analysis
+            varstring = (
+                "("
+                + ",".join([str(feat) + "=" + val for feat, val in zip(range(1, len(v) + 1), v)])
+                + ")"
+            )
+            table = p(*v)  # Instantiate table with vars from analysis
             baseform = table[0][0]
             matchtable = [(form, msd) for form, msd in table if form in words]
-            wordformlist = [form + ':' + baseform + ',' + ','.join([m[0] + '=' + m[1] for m in msd]) for form, msd in matchtable]
-            print((str(score) + ' ' + p.name + ' ' + varstring + ' ' + '#'.join(wordformlist)).encode("utf-8"))
+            wordformlist = [
+                form + ":" + baseform + "," + ",".join([m[0] + "=" + m[1] for m in msd])
+                for form, msd in matchtable
+            ]
+            print(
+                (
+                    str(score) + " " + p.name + " " + varstring + " " + "#".join(wordformlist)
+                ).encode("utf-8")
+            )
             if print_tables:
                 for form, msd in table:
                     if form in words:
                         form = "*" + form + "*"
-                    msdprint = ','.join([m[0] + '=' + m[1] for m in msd])
-                    print((form + '\t' + msdprint).encode("utf-8"))
+                    msdprint = ",".join([m[0] + "=" + m[1] for m in msd])
+                    print((form + "\t" + msdprint).encode("utf-8"))
 
             if debug:
-                print("Members:", ", ".join([p(*[var[1] for var in vs])[0][0] for vs in p.var_insts]))
+                print(
+                    "Members:",
+                    ", ".join([p(*[var[1] for var in vs])[0][0] for vs in p.var_insts]),
+                )
     print()
 
 

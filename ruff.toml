@@ -24,7 +24,7 @@ select = [
   "PERF", # Perflint
   "PIE",  # flake8-pie
   "PL",   # Pylint
-  "PT",   # flake8-pytest-style
+#   "PT",   # flake8-pytest-style
   "PTH",  # flake8-use-pathlib
   "Q",    # flake8-quotes
   "RET",  # flake8-return
@@ -58,4 +58,6 @@ convention = "google"
 
 # Ignore `E402` (import violations) in all `__init__.py` files, and in `path/to/file.py`.
 [lint.per-file-ignores]
-"tests/*" = ["D100", "D101", "D102", "D103", "D104", "S101"]
+"tests/*" = ["D100", "D101", "D102", "D103", "D104", "S101","ANN001","ANN201","PLC2701","PLR2004", "PTH","PLW","PERF","E501"]
+"bin/*" = ["ANN001","ANN201","D100","D103","E","N","PLR","F","T","D","B","C","PERF","ANN","PLW","PLC"]
+"examples/*" = ["ANN001","ANN201","D100","D103","E","N","PLR","F","T","D","B","C","PERF","ANN","PLW","PLC","PTH","UP","FURB"]
