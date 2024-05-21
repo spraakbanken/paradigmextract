@@ -9,3 +9,4 @@ __pycache__
 requirements-dev.lock
 requirements.lock
 .pdm-python
+.coverage

@@ -1,9 +1,11 @@
-from typing import Optional, Tuple
+"""Regex matcher."""
+
+from typing import Optional
 
 
 class MRegex:
-    """Simple re.findall replacement that returns all possible matches -
-    not just the leftmost-longest match.
+    """Simple re.findall replacement that returns all possible matches - not just the leftmost-longest match.
+
     Only handles (.+) and c constructs (c being an arbitrary character).
     Expressions are automatically anchored in the head and the tail,
     i.e. the regexes behave as if they began with ^ and ended with $.
@@ -13,18 +15,18 @@ class MRegex:
     >>> m = MRegex('(.+)a(.+)as')
     >>> m.findall('bananas')
     [('b', 'nan'), ('ban', 'n')]
-    """
+    """  # noqa: E501
 
-    def __init__(self, regex: str):
+    def __init__(self, regex: str) -> None:  # noqa: D107
         self.regex = regex
         self.regexlen = len(regex)
         self.text = ""
         self.textlen = 0
         # self.matches: list = []
-        self.results: list[list[Tuple[int, int]]] = []
+        self.results: list[list[tuple[int, int]]] = []
         self.matched = False
 
-    def findall(self, text: str) -> Optional[list[Tuple[str, ...]]]:
+    def findall(self, text: str) -> Optional[list[tuple[str, ...]]]:  # noqa: D102
         strindex = 0
         regindex = 0
         self.text = text
@@ -36,9 +38,7 @@ class MRegex:
             return [tuple(self.text[i:j] for i, j in r) for r in self.results]
         return None
 
-    def match(
-        self, strindex: int, regindex: int, groups: list[Tuple[int, int]]
-    ) -> None:
+    def match(self, strindex: int, regindex: int, groups: list[tuple[int, int]]) -> None:  # noqa: D102
         # Are we at end of regex _1and_ text?
         if strindex == self.textlen and regindex == self.regexlen:
             self.matched = True

@@ -1,5 +1,3 @@
-import json
-import os
 from paradigmextract.pextract import learnparadigms
 
 

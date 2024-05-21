@@ -9,35 +9,35 @@ def is_var(s):
 
 def extract_embedded(wf, em_d):
     pre_var = False
-    pvar = ''
-    for i in range(0, len(wf)-1):
+    pvar = ""
+    for i in range(len(wf) - 1):
         if is_var(wf[i]):
             pre_var = True
             pvar = wf[i]
-            if is_var(wf[i+1]):
-                em_d[wf[i]+':'+wf[i+1]].add('0')
+            if is_var(wf[i + 1]):
+                em_d[wf[i] + ":" + wf[i + 1]].add("0")
         else:
-            if pre_var and is_var(wf[i+1]):
-                em_d[pvar+':'+wf[i+1]].add(wf[i].replace('"', ''))
+            if pre_var and is_var(wf[i + 1]):
+                em_d[pvar + ":" + wf[i + 1]].add(wf[i].replace('"', ""))
             pre_var = False
     return em_d
 
 
 def main():
-    for fp in glob.glob('paradigms/*.para'):
+    for fp in glob.glob("paradigms/*.para"):
         p_em_d = defaultdict(list)
-        print('\n[%s]\n' % fp)
-        with codecs.open(fp, encoding='utf-8') as f:
+        print("\n[%s]\n" % fp)
+        with codecs.open(fp, encoding="utf-8") as f:
             for (i, l) in enumerate(f, 1):
                 em_d = defaultdict(set)
-                (p, ex) = l.split('\t')
-                pid = ex.split(',')[0].split('=')[1]
-                wfs = p.split('#')
+                (p, ex) = l.split("\t")
+                pid = ex.split(",")[0].split("=")[1]
+                wfs = p.split("#")
 
                 for wf in wfs:
-                    em_d = extract_embedded(wf.split('+'), em_d)
+                    em_d = extract_embedded(wf.split("+"), em_d)
                 for (j, st) in em_d.iteritems():
-                    s = '[%s] %s' % (j, "-".join(st))
+                    s = "[%s] %s" % (j, "-".join(st))
                     p_em_d[s].append(pid)
 
             p_em_l = []
@@ -46,8 +46,8 @@ def main():
             p_em_l.sort(reverse=True)
             for (i, (s, pids)) in p_em_l:
                 if i > 1:
-                    print('%s\t%s' % (s, ", ".join(pids))).encode('utf-8')
+                    print("%s\t%s" % (s, ", ".join(pids))).encode("utf-8")
 
 
-if __name__ == '__name':
+if __name__ == "__name":
     main()
