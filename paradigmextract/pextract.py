@@ -8,7 +8,7 @@ import re
 from paradigmextract import paradigm
 
 
-def learnparadigms(inflectiontables: list[tuple[list[str], list[list[tuple[str, str]]]]]):  # noqa: ANN201, D103
+def learnparadigms(inflectiontables: list[tuple[list[str], list[tuple[str, str]]]]):  # noqa: ANN201, D103
     vartables = []
     table_limit = 16
     for table, tagtable in inflectiontables:
