@@ -1,12 +1,7 @@
-import json
-from pathlib import Path
-
 from paradigmextract.pextract import learnparadigms
 
 
-def test_all():
-    with Path("tests/testdata.json").open() as fp:
-        test_tables = json.load(fp)
+def test_all(test_tables: list[dict[str, list[str]]]):
     final_tables = []
     assert len(test_tables) == 9943
     for table in test_tables:

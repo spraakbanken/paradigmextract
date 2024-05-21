@@ -1,7 +1,5 @@
 import functools
-import json
 import operator
-import os
 
 from paradigmextract.pextract import WordGraph
 
@@ -12,10 +10,7 @@ def get_lcs(table):
     return result.longestwords
 
 
-def test_all():
-    join = os.path.join("/", *os.path.realpath(__file__).split("/")[:-2], "testdata.json")
-    with open(join) as fp:
-        test_tables = json.load(fp)
-        for table in test_tables:
-            lcs = get_lcs(table["wordforms"])
-            assert lcs is not None
+def test_all(test_tables: list[dict[str, list[str]]]):
+    for table in test_tables:
+        lcs = get_lcs(table["wordforms"])
+        assert lcs is not None
