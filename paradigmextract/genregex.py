@@ -1,7 +1,5 @@
 """Genregex."""
 
-import operator
-
 
 class Genregex:
     """Generalizes a list of strings into a regex.
@@ -54,14 +52,14 @@ class Genregex:
             return
         # Case (2a): find longest suffix that has limited distribution
         for i in range(-self.minlen, 0):
-            suffstrings = map(operator.itemgetter(slice(i, None)), self.strings)
-            if self._significancetest(len(list(suffstrings)), len(set(suffstrings))):
+            suffstrings = [x[i:] for x in self.strings]
+            if self._significancetest(len(suffstrings), len(set(suffstrings))):
                 self.suffixset = set(suffstrings)
                 break
         # Case (2b): find longest prefix that has limited distribution
         for i in range(self.minlen, 0, -1):
-            prefstrings = map(operator.itemgetter(slice(i)), self.strings)
-            if self._significancetest(len(list(prefstrings)), len(set(prefstrings))):
+            prefstrings = [x[:i] for x in self.strings]
+            if self._significancetest(len(prefstrings), len(set(prefstrings))):
                 self.prefixset = set(prefstrings)
                 break
         # Case (2c): find out if stringlengths have limited distribution
@@ -71,7 +69,7 @@ class Genregex:
                 self.lenrange = (self.minlen, self.maxlen)
         return
 
-    def pyregex(self):  # noqa: ANN201, D102
+    def pyregex(self) -> str:  # noqa: D102
         # ^(?=.*suffix$)(?=.{min,max}$)prefix
         re = ""
         if len(self.stringset) > 0:
