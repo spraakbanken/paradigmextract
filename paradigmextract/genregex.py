@@ -30,8 +30,13 @@ class Genregex:
     Example:
     >>> words = ['ab','ab','ab','ba','ba','ba','ab','ba','a','b']
     >>> r = Genregex(words)
-    >>> print(r.pyregex())
-    ^(?=.*(a|b)$)(?=.{1,2}$)(a|b)
+    >>> pyregex = r.pyregex()
+    >>> pyregex_parts = pyregex.split('(')
+    >>> assert pyregex_parts[0] == '^'
+    >>> assert pyregex_parts[1] == '?=.*'
+    >>> assert (pyregex_parts[2] == 'a|b)$)') or (pyregex_parts[2] == 'b|a)$)')
+    >>> assert pyregex_parts[3] == '?=.{1,2}$)'
+    >>> assert (pyregex_parts[4] == 'a|b)') or (pyregex_parts[4] == 'b|a)')
     """
 
     def __init__(self, strings: list[str], pvalue: float = 0.05, length: bool = True) -> None:  # noqa: D107
